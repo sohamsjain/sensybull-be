@@ -1,4 +1,6 @@
-from marshmallow import Schema, fields, validate
+from marshmallow import Schema, fields, validate, pre_load, ValidationError
+from app.models.ticker import Ticker
+from app import db
 
 
 class UserSchema(Schema):
@@ -28,3 +30,31 @@ class TickerSchema(Schema):
     name = fields.Str(dump_only=True)
     last_price = fields.Float(dump_only=True)
     last_updated = fields.DateTime(dump_only=True)
+
+
+class ArticleSchema(Schema):
+    id = fields.Str(dump_only=True)
+    url = fields.Str(required=True, validate=validate.Length(max=512))
+    title = fields.Str(required=True, validate=validate.Length(max=512))
+    timestamp = fields.Int(required=True)
+    provider = fields.Str(validate=validate.Length(max=256), allow_none=True)
+    provider_url = fields.Str(validate=validate.Length(max=512), allow_none=True)
+    summary = fields.Str(allow_none=True)
+    image_url = fields.Str(validate=validate.Length(max=512), allow_none=True)
+    article_text = fields.Str(allow_none=True)
+    extracted_at = fields.Str(validate=validate.Length(max=64), allow_none=True)
+    created_at = fields.DateTime(dump_only=True)
+    tickers = fields.List(fields.Nested('TickerSchema'), dump_only=True)
+
+
+class ArticleCreateSchema(Schema):
+    url = fields.Str(required=True, validate=validate.Length(max=512))
+    title = fields.Str(required=True, validate=validate.Length(max=512))
+    timestamp = fields.Int(required=True)
+    provider = fields.Str(required=True, validate=validate.Length(max=256))
+    provider_url = fields.Str(required=True, validate=validate.Length(max=512))
+    summary = fields.Str(allow_none=True)
+    image_url = fields.Str(validate=validate.Length(max=512), allow_none=True)
+    article_text = fields.Str(allow_none=True)
+    extracted_at = fields.Str(validate=validate.Length(max=64), allow_none=True)
+    tickers = fields.List(fields.Str(), missing=[])
