@@ -3,7 +3,7 @@ Storage service for persisting articles
 """
 import logging
 from typing import Dict
-from http_client import HTTPClient
+from .http_client import HTTPClient
 
 
 class StorageService:

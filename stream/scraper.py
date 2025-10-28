@@ -5,11 +5,11 @@ import logging
 import time
 from typing import Optional
 from config import Config
-from http_client import HTTPClient
-from sitemap_parser import SitemapParser
-from article_parser import ArticleParser
-from storage_service import StorageService
-from article_processor import ArticleProcessor
+from .http_client import HTTPClient
+from .sitemap_parser import SitemapParser
+from .article_parser import ArticleParser
+from .storage_service import StorageService
+from .article_processor import ArticleProcessor
 
 
 class Scraper:

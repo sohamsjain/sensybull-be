@@ -3,9 +3,9 @@ Article processing orchestration
 """
 import logging
 from typing import Set
-from http_client import HTTPClient
-from article_parser import ArticleParser
-from storage_service import StorageService
+from .http_client import HTTPClient
+from .article_parser import ArticleParser
+from .storage_service import StorageService
 
 
 class ArticleProcessor:
