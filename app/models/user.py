@@ -4,6 +4,7 @@ import sqlalchemy.orm as so
 from app.models.base import BaseModel
 from werkzeug.security import generate_password_hash, check_password_hash
 from app.models.ticker import user_ticker
+from app.models.topic import user_topic
 
 
 class User(BaseModel):
@@ -20,6 +21,7 @@ class User(BaseModel):
 
     # Relationships
     tickers: so.Mapped[List["Ticker"]] = so.relationship(back_populates='users', secondary=user_ticker)
+    topics: so.Mapped[List["Topic"]] = so.relationship(back_populates='users', secondary=user_topic)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
