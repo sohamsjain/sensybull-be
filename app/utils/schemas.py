@@ -11,6 +11,7 @@ class UserSchema(Schema):
     is_admin = fields.Bool(dump_only=True)
     created_at = fields.DateTime(dump_only=True)
     tickers = fields.List(fields.Nested('TickerSchema'), dump_only=True)
+    topics = fields.List(fields.Nested('TopicSchema'), dump_only=True)
 
 
 class UserRegistrationSchema(Schema):
@@ -32,6 +33,13 @@ class TickerSchema(Schema):
     last_updated = fields.DateTime(dump_only=True)
 
 
+class TopicSchema(Schema):
+    id = fields.Str(dump_only=True)
+    name = fields.Str(required=True, validate=validate.Length(min=1, max=200))
+    last_updated = fields.DateTime(dump_only=True)
+    created_at = fields.DateTime(dump_only=True)
+
+
 class ArticleSchema(Schema):
     id = fields.Str(dump_only=True)
     url = fields.Str(required=True, validate=validate.Length(max=512))
@@ -45,6 +53,7 @@ class ArticleSchema(Schema):
     extracted_at = fields.Str(validate=validate.Length(max=64), allow_none=True)
     created_at = fields.DateTime(dump_only=True)
     tickers = fields.List(fields.Nested('TickerSchema'), dump_only=True)
+    topics = fields.List(fields.Nested('TopicSchema'), dump_only=True)
 
 
 class ArticleCreateSchema(Schema):
@@ -58,3 +67,4 @@ class ArticleCreateSchema(Schema):
     article_text = fields.Str(allow_none=True)
     extracted_at = fields.Str(validate=validate.Length(max=64), allow_none=True)
     tickers = fields.List(fields.Str(), missing=[])
+    topics = fields.List(fields.Str(), missing=[])

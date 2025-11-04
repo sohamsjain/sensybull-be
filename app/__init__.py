@@ -36,11 +36,13 @@ def create_app(config_class=Config):
     from app.routes.auth import auth_bp
     from app.routes.users import users_bp
     from app.routes.tickers import tickers_bp
+    from app.routes.topics import topics_bp
     from app.routes.articles import articles_bp
 
     app.register_blueprint(auth_bp, url_prefix='/auth')
     app.register_blueprint(users_bp, url_prefix='/users')
     app.register_blueprint(tickers_bp, url_prefix='/tickers')
+    app.register_blueprint(topics_bp, url_prefix='/topics')
     app.register_blueprint(articles_bp, url_prefix='/articles')
 
     # Error handlers
