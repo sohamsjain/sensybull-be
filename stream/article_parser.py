@@ -8,13 +8,42 @@ import re
 import logging
 from html import unescape
 from typing import Optional, Dict, List
+from .article_transformer import ArticleTransformer
 
 
 class ArticleParser:
     """Parses individual Yahoo Finance article pages"""
 
+    # List of permissible providers
+    EXTENDED_PERMISSIBLE_PROVIDERS = [
+        "GlobeNewswire",
+        "ACCESS Newswire",
+        "PR Newswire",
+        "Business Wire",
+        "Newsfile",
+        "NewMediaWire",
+        "Reuters",
+        "Bloomberg",
+        "TheStreet",
+        "MarketWatch",
+        "Seeking Alpha",
+        "Benzinga",
+        "Barron's",
+        "The Wall Street Journal",
+        "Financial Times"
+    ]
+
+    PERMISSIBLE_PROVIDERS = [
+        "GlobeNewswire",
+        "ACCESS Newswire",
+        "PR Newswire",
+        "Business Wire",
+        "Newsfile",
+    ]
+
     def __init__(self):
         self.logger = logging.getLogger(__name__)
+        self.article_transformer = ArticleTransformer()
 
     def extract_article_data(self, article_url: str, html_content: str) -> Optional[Dict]:
         """
@@ -88,6 +117,25 @@ class ArticleParser:
         """Extract all required fields from article data"""
         content_meta = article_data.get('contentMeta', {})
 
+        # Extract provider info
+        provider, provider_url = self._extract_provider(content_meta)
+        if not provider or not provider_url:
+            self.logger.error(f"No provider information found for {article_url}")
+            return None
+
+        # FILTER: Check if provider is in the permissible list
+        if provider not in self.PERMISSIBLE_PROVIDERS:
+            self.logger.info(f"Discarding article from non-permissible provider '{provider}': {article_url}")
+            return None
+
+        # Extract tickers
+        tickers = self._extract_tickers(content_meta)
+
+        # FILTER: Check if article has at least one ticker
+        if not tickers or len(tickers) == 0:
+            self.logger.info(f"Discarding article with no tickers: {article_url}")
+            return None
+
         # Extract timestamp
         timestamp = self._extract_timestamp(content_meta)
         if not timestamp:
@@ -100,40 +148,36 @@ class ArticleParser:
             self.logger.error(f"No title found for {article_url}")
             return None
 
-        # Extract provider info
-        provider, provider_url = self._extract_provider(content_meta)
-        if not provider or not provider_url:
-            self.logger.error(f"No provider information found for {article_url}")
-            return None
-
-        # Extract summary
-        summary = self._extract_summary(content_meta)
-        if not summary:
-            self.logger.error(f"No summary found for {article_url}")
-            return None
-
         # Extract image
         image_url = self._extract_image(content_meta)
-        if not image_url:
-            self.logger.error(f"No image URL found for {article_url}")
-            return None
-
-        # Extract tickers (optional)
-        tickers = self._extract_tickers(content_meta)
 
         # Extract article text
         article_text = self._extract_article_text(content_meta)
 
+        # Classification & Summarization using ArticleTransformer
+        try:
+            refined_title, bullets, summary, topic = self.article_transformer.transform(title, article_text)
+            self.logger.info(f"Article classified as '{topic}': {article_url}")
+        except Exception as e:
+            self.logger.error(f"Transformer failed for {article_url}: {e}")
+            # Use fallback values if transformation fails
+            refined_title = title
+            bullets = []
+            summary = article_text[:500] + "..." if len(article_text) > 500 else article_text
+            topic = "General"
+
         return {
             'url': article_url,
-            'title': title,
+            'title': refined_title,  # Using refined title from transformer
             'timestamp': timestamp,
             'provider': provider,
             'provider_url': provider_url,
-            'summary': summary,
+            'bullets': bullets,  # Bullet points from transformer
+            'summary': summary,  # Summary from transformer
+            'topics': [topic],  # Category from transformer
             'image_url': image_url,
             'tickers': tickers,
-            'article_text': article_text,
+            'article_text': article_text,  # Keep original text
             'extracted_at': datetime.now().isoformat()
         }
 
@@ -160,11 +204,6 @@ class ArticleParser:
             provider = "Yahoo Finance"
 
         return provider, provider_url
-
-    def _extract_summary(self, content_meta: Dict) -> Optional[str]:
-        """Extract summary from content metadata"""
-        content_summaries = content_meta.get('contentSummaries', {})
-        return content_summaries.get('summary')
 
     def _extract_image(self, content_meta: Dict) -> Optional[str]:
         """Extract primary image URL"""

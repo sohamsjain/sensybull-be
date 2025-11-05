@@ -6,6 +6,7 @@ from sqlalchemy import desc, or_, and_, func
 from app import db
 from app.models.article import Article
 from app.models.ticker import Ticker
+from app.models.topic import Topic
 from app.models.user import User
 from app.utils.schemas import ArticleSchema, ArticleCreateSchema
 from app.utils.auth import admin_required
@@ -42,8 +43,21 @@ def create_article():
                 continue
             tickers.append(ticker)
 
+    # Handle topic association
+    ts = data.pop('topics', [])
+    topics = []
+    for t in ts:
+        topic = Topic.query.filter_by(name=t).first()
+        if not topic:
+            # Create new topic if it doesn't exist
+            topic = Topic(name=t)
+            db.session.add(topic)
+            db.session.flush()  # Get the ID
+        topics.append(topic)
+
     article = Article(**data)
     article.tickers = tickers
+    article.topics = topics
 
     try:
         db.session.add(article)
@@ -71,6 +85,7 @@ def get_all_articles():
     per_page = min(request.args.get('per_page', 20, type=int), 100)  # Max 100 per page
     ticker_symbol = request.args.get('ticker', type=str)
     provider = request.args.get('provider', type=str)
+    topic = request.args.get('topic', type=str)  # NEW: Filter by topic
     search = request.args.get('search', type=str)
     start_date = request.args.get('start_date', type=int)  # Unix timestamp
     end_date = request.args.get('end_date', type=int)  # Unix timestamp
@@ -85,6 +100,10 @@ def get_all_articles():
     # Filter by provider
     if provider:
         query = query.filter(Article.provider.ilike(f'%{provider}%'))
+
+    # Filter by topic
+    if topic:
+        query = query.join(Article.topics).filter(Topic.name == topic)
 
     # Search in title and summary
     if search:
@@ -157,6 +176,41 @@ def get_articles_by_ticker(ticker_symbol):
 
     return jsonify({
         'ticker': ticker_symbol.upper(),
+        'articles': articles_schema.dump(articles.items),
+        'pagination': {
+            'page': page,
+            'per_page': per_page,
+            'total': articles.total,
+            'pages': articles.pages,
+            'has_next': articles.has_next,
+            'has_prev': articles.has_prev
+        }
+    })
+
+
+# ---------------- GET ARTICLES BY TOPIC ----------------
+@articles_bp.route('/topic/<topic_name>', methods=['GET'])
+@jwt_required()
+def get_articles_by_topic(topic_name):
+    """Get all articles for a specific topic"""
+    page = request.args.get('page', 1, type=int)
+    per_page = min(request.args.get('per_page', 20, type=int), 100)
+
+    # Verify topic exists
+    topic = Topic.query.filter_by(name=topic_name).first_or_404()
+
+    # Get articles for this topic
+    articles = Article.query.join(Article.topics) \
+        .filter(Topic.name == topic_name) \
+        .order_by(desc(Article.timestamp)) \
+        .paginate(
+        page=page,
+        per_page=per_page,
+        error_out=False
+    )
+
+    return jsonify({
+        'topic': topic_name,
         'articles': articles_schema.dump(articles.items),
         'pagination': {
             'page': page,

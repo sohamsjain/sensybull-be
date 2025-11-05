@@ -34,10 +34,9 @@ class TickerSchema(Schema):
 
 
 class TopicSchema(Schema):
+    """Schema for Topic"""
     id = fields.Str(dump_only=True)
-    name = fields.Str(required=True, validate=validate.Length(min=1, max=200))
-    last_updated = fields.DateTime(dump_only=True)
-    created_at = fields.DateTime(dump_only=True)
+    name = fields.Str(dump_only=True)
 
 
 class ArticleSchema(Schema):
@@ -47,13 +46,14 @@ class ArticleSchema(Schema):
     timestamp = fields.Int(required=True)
     provider = fields.Str(validate=validate.Length(max=256), allow_none=True)
     provider_url = fields.Str(validate=validate.Length(max=512), allow_none=True)
+    bullets = fields.List(fields.Str(), allow_none=True)  # NEW: Bullet points
     summary = fields.Str(allow_none=True)
     image_url = fields.Str(validate=validate.Length(max=512), allow_none=True)
     article_text = fields.Str(allow_none=True)
     extracted_at = fields.Str(validate=validate.Length(max=64), allow_none=True)
     created_at = fields.DateTime(dump_only=True)
     tickers = fields.List(fields.Nested('TickerSchema'), dump_only=True)
-    topics = fields.List(fields.Nested('TopicSchema'), dump_only=True)
+    topics = fields.List(fields.Nested('TopicSchema'), dump_only=True)  # NEW: Topics
 
 
 class ArticleCreateSchema(Schema):
@@ -62,6 +62,7 @@ class ArticleCreateSchema(Schema):
     timestamp = fields.Int(required=True)
     provider = fields.Str(required=True, validate=validate.Length(max=256))
     provider_url = fields.Str(required=True, validate=validate.Length(max=512))
+    bullets = fields.List(fields.Str(), missing=[])
     summary = fields.Str(allow_none=True)
     image_url = fields.Str(validate=validate.Length(max=512), allow_none=True)
     article_text = fields.Str(allow_none=True)

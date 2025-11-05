@@ -14,6 +14,7 @@ class Article(BaseModel):
     timestamp: so.Mapped[int] = so.mapped_column(sa.BigInteger, nullable=False)
     provider: so.Mapped[Optional[str]] = so.mapped_column(sa.String(256), nullable=True)
     provider_url: so.Mapped[Optional[str]] = so.mapped_column(sa.String(512), nullable=True)
+    bullets: so.Mapped[Optional[List[str]]] = so.mapped_column(sa.JSON, nullable=True)
     summary: so.Mapped[Optional[str]] = so.mapped_column(sa.Text, nullable=True)
     image_url: so.Mapped[Optional[str]] = so.mapped_column(sa.String(512), nullable=True)
     article_text: so.Mapped[Optional[str]] = so.mapped_column(sa.Text, nullable=True)

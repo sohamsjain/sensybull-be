@@ -1,8 +1,8 @@
 """
 Entry point for Yahoo Finance scraper
 """
-from .scraper import Scraper
-from .config import Config
+from stream.scraper import Scraper
+from stream.config import Config
 
 
 def main():
