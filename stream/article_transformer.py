@@ -29,7 +29,6 @@ class TransformerConfig:
 
                 # Tier 2: Newer Llama 4 models (likely 1K RPD)
                 "meta-llama/llama-4-maverick-17b-128e-instruct",
-                "meta-llama/llama-4-scout-17b-16e-instruct",
 
                 # Tier 3: High quality (1K RPD)
                 "llama-3.3-70b-versatile",
