@@ -58,7 +58,7 @@ class Scraper:
 
         while True:
             try:
-                current_url = f"{self.config.BASE_URL}/{current_date}_start"
+                current_url = f"{self.config.BASE_URL}/{current_date}/"
                 print(f"Starting scrape cycle with URL: {current_url}")
 
                 page_without_next = None
