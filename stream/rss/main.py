@@ -1,6 +1,9 @@
 """
 Entry point for RSS feed press release scraper
 """
+from dotenv import load_dotenv
+load_dotenv()
+
 from .rss_scraper import RSSScraper
 from .config import RSSConfig
 
