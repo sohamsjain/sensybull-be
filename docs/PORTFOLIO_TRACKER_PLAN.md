@@ -1,505 +1,669 @@
-# Portfolio Tracker for US Equities — Product & Technical Plan
+# Investment Thesis Tracker — Product & Technical Plan
 
-## Part 1: The Pain (Why Would Someone Pay $20/month?)
+## Part 1: The Pain
 
-### The Core Problem
+### The One Problem
 
-Retail equity investors in the US today are **fragmented across 5-10 tools** to answer basic questions about their own money:
+Every serious self-directed investor has a thesis for every stock they own. It lives in their head, maybe in a Google Doc, maybe in scattered notes. There is no tool that:
 
-1. **"How am I actually doing?"** — Brokerage apps show P&L per account, but most investors hold 2-3 accounts (Fidelity 401k, Schwab brokerage, Robinhood play account). Nobody shows them the unified picture.
+1. **Captures** the thesis in a structured way
+2. **Monitors** whether the thesis is playing out or breaking down
+3. **Alerts** them when something changes that's relevant to their thesis
+4. **Holds them accountable** to their own logic
 
-2. **"What should I be paying attention to right now?"** — An FDA decision on a biotech they hold, an earnings date, a lockup expiry, an activist taking a position. This information exists but it's scattered across SEC filings, press releases, and news. Nobody connects it to *their specific portfolio*.
+This matters because the #1 reason retail investors lose money isn't picking the wrong stocks — it's **holding too long after their reason for owning has evaporated**, or **selling too early because they forgot why they bought**.
 
-3. **"Am I concentrated in ways I don't realize?"** — An investor owns AAPL, MSFT, QQQ, and a tech-focused mutual fund in their 401k. They think they're diversified. They're 60% tech. Nobody tells them this simply.
+### Who Is This For?
 
-4. **"What happened while I wasn't looking?"** — Investors don't check daily. When they come back after a week, they want a briefing: what moved, why, and does it matter?
+Not day traders. Not passive index fund buyers. This is for the **thoughtful, research-driven retail investor** who:
 
-5. **"What's the tax damage?"** — At any point in the year, investors have no idea what their realized/unrealized gains look like, or which lots to sell for tax-loss harvesting.
+- Reads 10-Ks and listens to earnings calls
+- Has strong, specific opinions about 10-30 individual stocks
+- Spends real time on research before buying
+- Is frustrated that none of their tools capture the "why"
+- Wants to become a better investor over time by learning from their own decisions
 
-### Why Existing Tools Fail
+These people exist in large numbers. They use Seeking Alpha, read r/investing, follow fintwit. They are underserved because every tool is built around the "what" (price, P&L) and ignores the "why" (thesis, catalysts, conviction).
 
-| Tool | What it does well | Where it falls short |
-|------|-------------------|---------------------|
-| Brokerage apps | Trade execution, single-account view | No cross-account view, no intelligence layer |
-| Google Finance | Quick price checks | No real portfolio tracking, no alerts |
-| Yahoo Finance | News, basic portfolio | Stale UX, no AI summaries, no tax tools |
-| Stock Events | Dividend tracking | Narrow scope, no portfolio-level intelligence |
-| Sharesight | Tax reporting | Expensive ($25+/mo), complex, built for accountants |
-| Wealthfront/Betterment | Automated investing | No control — you can't pick your own stocks |
+### Why $20/Month?
 
-### The Gap We Fill
-
-**A single place that combines: unified portfolio view + personalized news intelligence + tax awareness — specifically for self-directed US equity investors.**
-
-The $20/mo value proposition: "We save you hours per week of manual tracking and prevent costly mistakes (tax, concentration, missed events) that cost you far more than $20."
+Because this tool **prevents the $500-$5,000 mistake** that happens 1-2 times per year: holding a broken thesis, missing a catalyst, or panic-selling a thesis that's intact. One saved mistake per year pays for the entire annual subscription 2-10x over.
 
 ---
 
-## Part 2: The Experience (What the User Sees)
+## Part 2: The Experience
 
-### 2.1 Onboarding (First 5 Minutes)
+### 2.1 Core Concept: The Thesis Card
 
-**Goal**: Get the user to value within 5 minutes. No brokerage linking on day one — that's friction.
-
-1. **Sign up** (Google OAuth — already built)
-2. **"Add your holdings"** — Simple form: ticker + shares + avg cost (optional). Support CSV upload for power users.
-3. **Instant dashboard** — The moment they add holdings, show:
-   - Total portfolio value
-   - Today's P&L ($ and %)
-   - A personalized news feed for their holdings (already built via our article pipeline)
-   - One insight: "You're 45% concentrated in Technology"
-
-**Phase 2**: Offer brokerage linking via Plaid/Snaptrade for automatic sync.
-
----
-
-### 2.2 Daily Experience — The Dashboard
+Every position has a **Thesis Card** — the atomic unit of the product. It's the investor's structured argument for why they own (or are watching) a stock.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  Portfolio Value: $127,432.18        Today: +$1,243 (+0.98%)│
-│  Total Gain: +$23,412 (+22.5%)      YTD: +$8,231 (+6.9%)  │
-├─────────────────────────────────────────────────────────────┤
+│  NVDA — NVIDIA Corp                          Added Mar 2025 │
+│  Status: ● ACTIVE          Conviction: ████████░░ HIGH      │
 │                                                             │
-│  📋 TODAY'S BRIEFING                              Feb 9, 2026│
-│  ─────────────────────────────────────────────────────────  │
-│  • NVDA +3.2% — New AI chip partnership announced           │
-│  • JNJ: FDA advisory committee meets Thursday (you hold 50) │
-│  • Tax alert: TSLA has $2,100 in unrealized losses          │
-│    (wash sale window closes in 4 days)                      │
+│  THESIS                                                     │
+│  "AI infrastructure spending is in a multi-year upcycle.    │
+│   NVDA has 80%+ market share in training GPUs and is        │
+│   expanding into inference and networking. Revenue will      │
+│   compound 30%+ annually through 2027."                     │
 │                                                             │
-├─────────────────────────────────────────────────────────────┤
-│  HOLDINGS                          Sort: Value ▼            │
-│  ─────────────────────────────────────────────────────────  │
-│  AAPL    100 shares   $18,432   +$4,231  (+29.8%)   14.5%  │
-│  NVDA     25 shares   $15,200   +$6,100  (+67.0%)   11.9%  │
-│  MSFT     40 shares   $14,800   +$2,800  (+23.3%)   11.6%  │
+│  CATALYSTS (what needs to happen)               Status      │
+│  ├─ Data center revenue > $15B/quarter          ✅ Hit Q4'25│
+│  ├─ Blackwell GPU ramp to volume production     ⏳ On track │
+│  ├─ Inference market share > 50%                ⏳ Watching │
+│  └─ Gross margins stay above 70%                ✅ 74% last │
+│                                                             │
+│  KILL CONDITIONS (what would make me sell)                   │
+│  ├─ AMD gains >30% datacenter GPU share         ✅ Safe     │
+│  ├─ Revenue growth drops below 20% YoY          ✅ Safe     │
+│  ├─ Major customer builds competing silicon      ⚠️ Watch   │
+│  │   → Dec 12: MSFT announced Maia 2 chip                  │
+│  └─ Gross margins fall below 65%                ✅ Safe     │
+│                                                             │
+│  RECENT SIGNALS (auto-detected)                  last 7 days│
+│  ├─ 🟢 "NVDA announces $3B partnership with Oracle"        │
+│  │     Supports: AI infrastructure spending thesis          │
+│  ├─ 🟡 "Custom AI chip startups raise $2.1B in Q4"         │
+│  │     Watch: competitive threat to GPU dominance           │
+│  └─ 🟢 Insider: Jensen Huang exercised options (routine)   │
+│                                                             │
+│  JOURNAL                                                    │
+│  Feb 8 — "Earnings blew out. Raising conviction to HIGH."   │
+│  Jan 15 — "MSFT Maia 2 is a risk but years away from       │
+│            competing at scale. Holding."                     │
+│  Nov 3 — "Bought 25 shares at $608. Thesis: AI infra."     │
+│                                                             │
+│  TARGET: $250 (+38%)    STOP: $120 (-34%)    P&L: +67%     │
+└─────────────────────────────────────────────────────────────┘
+```
+
+This is the entire product. Everything else exists to make this card **richer, more automated, and more honest**.
+
+---
+
+### 2.2 The Three Screens
+
+#### Screen 1: Thesis Dashboard (Home)
+
+The daily view. Not a portfolio tracker — a **thesis health check**.
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  MY THESES                                    7 active, 2 watch│
+│                                                             │
+│  NEEDS ATTENTION                                            │
+│  ┌─────────────────────────────────────────────────────────┐│
+│  │ ⚠️  GOOGL — Kill condition triggered                    ││
+│  │ "EU antitrust ruling could force Search unbundling"     ││
+│  │ You said: "Sell if regulatory action threatens >10%     ││
+│  │ of Search revenue." — Review your thesis.               ││
+│  └─────────────────────────────────────────────────────────┘│
+│  ┌─────────────────────────────────────────────────────────┐│
+│  │ 🎯 CELH — Catalyst hit                                  ││
+│  │ "Q4 revenue $430M — exceeds your target of $400M"      ││
+│  │ This was a key milestone in your thesis. Update?        ││
+│  └─────────────────────────────────────────────────────────┘│
+│                                                             │
+│  ALL THESES                         Sort: Conviction ▼      │
+│  Symbol   Thesis (short)                Conv.  Signals P&L  │
+│  NVDA     AI infra multi-year cycle     HIGH   🟢🟢🟡  +67% │
+│  AMZN     AWS + advertising flywheel    HIGH   🟢🟢    +23% │
+│  CELH     Energy drink share gains      MED    🟢🎯    +15% │
+│  GOOGL    Search moat + AI pivot        MED    🟢⚠️    +8%  │
+│  HIMS     Telehealth disruption         MED    🟢      +42% │
+│  SOFI     Neobank with lending moat     LOW    🟡🟡    -12% │
+│  PLTR     Gov + commercial AI platform  LOW    🟢      +5%  │
+│                                                             │
+│  WATCHLIST (no position yet)                                │
+│  CRWD     Cyber recovery post-outage    —      🟢🟢    —    │
+│  SHOP     SMB commerce reacceleration   —      🟡      —    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+#### Screen 2: Thesis Detail (The Card)
+
+Deep view of a single thesis. As shown in Section 2.1 above.
+
+#### Screen 3: Signal Feed
+
+A timeline of everything our system detected that relates to ANY of the user's theses. Not a generic news feed — every item is tagged to a specific thesis element.
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  SIGNAL FEED                             Showing: All theses│
+│                                                             │
+│  TODAY                                                      │
+│  🟢 NVDA — "Oracle expands NVDA GPU orders by 3x"          │
+│     → Supports: "AI infrastructure spending upcycle"        │
+│                                                             │
+│  ⚠️  GOOGL — "EU issues preliminary ruling on Search"       │
+│     → Threatens: Kill condition "regulatory action on       │
+│        Search revenue"                                      │
+│     → ACTION NEEDED: Review your thesis                     │
+│                                                             │
+│  🟡 SOFI — "Fed signals rate cuts may slow in 2026"         │
+│     → Mixed: Rate environment affects lending margins       │
+│                                                             │
+│  🎯 CELH — "Q4 Revenue: $430M (beat est. $405M)"           │
+│     → Catalyst hit: "Revenue > $400M/quarter"               │
+│                                                             │
+│  YESTERDAY                                                  │
+│  🟢 AMZN — "AWS revenue growth accelerates to 22%"         │
+│     → Supports: "AWS growth reacceleration" catalyst        │
 │  ...                                                        │
-│                                                             │
-├─────────────────────────────────────────────────────────────┤
-│  UPCOMING EVENTS (next 14 days)                             │
-│  ─────────────────────────────────────────────────────────  │
-│  Feb 11  AAPL ex-dividend ($0.25/share — you'll get $25)    │
-│  Feb 13  JNJ earnings (before market open)                  │
-│  Feb 18  NVDA lockup expiry (insider selling possible)      │
-│                                                             │
-├─────────────────────────────────────────────────────────────┤
-│  PORTFOLIO HEALTH                                           │
-│  ─────────────────────────────────────────────────────────  │
-│  Sector Concentration   ██████████░░ Technology 52% ⚠️      │
-│  Single Stock Risk      ████████░░░░ AAPL 14.5% (ok)       │
-│  Dividend Yield         2.1% ($2,674/yr estimated)          │
-│  Unrealized Gains       +$23,412 (short-term: $8,200)      │
 └─────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-### 2.3 Key Feature Modules
+### 2.3 Feature Breakdown
 
-#### Module 1: Portfolio Management (Core — Free tier bait)
-- Manual holdings entry (ticker, shares, cost basis, date)
-- Multiple portfolios / accounts (e.g., "Brokerage", "401k", "Roth IRA")
-- CSV import
-- Consolidated cross-account view
-- Real-time valuation with live/delayed prices
+#### Feature 1: Thesis Authoring (Core)
+- Free-text thesis statement
+- Structured catalysts with target metrics (quantifiable when possible)
+- Kill conditions (the conditions that would make them sell)
+- Conviction level (HIGH / MEDIUM / LOW)
+- Target price and stop-loss price (optional)
+- Position details (shares, cost basis — lightweight, not a full portfolio tracker)
+- Status: ACTIVE / WATCHING / CLOSED
 
-#### Module 2: Personalized News & Intelligence (Core — Already partially built)
-- News feed filtered to *only* stocks the user holds
-- AI-generated summaries and bullet points (already built)
-- Event classification: M&A, earnings, FDA, guidance, etc. (already built)
-- **NEW**: Relevance scoring — rank news by portfolio impact (% of portfolio affected)
-- **NEW**: "What happened" digest — weekly email/in-app summary
+#### Feature 2: Signal Detection (The AI layer — what makes it worth $20)
+- Our existing news pipeline scrapes press releases and articles
+- AI classifies each article against **the user's specific thesis elements**
+  - Does this support a catalyst?
+  - Does this threaten a kill condition?
+  - Is this neutral noise?
+- Earnings data matched against quantitative catalyst targets
+- Insider transactions surfaced when relevant
+- SEC filings (8-K) flagged when they match thesis topics
+- Signals tagged: 🟢 Supports | 🟡 Mixed/Neutral | ⚠️ Threatens | 🎯 Catalyst Hit
 
-#### Module 3: Event Calendar (High value — key differentiator)
-- Earnings dates for all held stocks
-- Ex-dividend dates with projected income
-- FDA decision dates (PDUFA)
-- Lockup expiry dates (for recent IPOs)
-- Index rebalance dates (S&P 500 additions/removals)
-- SEC filing deadlines (13F, insider transactions)
+#### Feature 3: Thesis Journal (The accountability layer)
+- Timestamped notes attached to each thesis
+- Automatic entries when:
+  - A catalyst is marked as hit/missed
+  - A kill condition is triggered
+  - Conviction level is changed
+  - Position is added to / trimmed / closed
+- The journal becomes a personal investing diary — the thing that makes you a better investor over time
+- Searchable across all theses ("show me every time I changed conviction")
 
-#### Module 4: Portfolio Analytics (Paid tier differentiator)
-- Sector/industry breakdown (pie chart)
-- Geographic revenue exposure (e.g., "Your portfolio has 35% China revenue exposure")
-- Correlation analysis (which of your holdings move together)
-- Concentration risk scoring
-- Historical performance vs benchmarks (S&P 500, QQQ)
-- Dividend income projection (annual, monthly)
+#### Feature 4: Alerts & Nudges (Retention)
+- Push/email when a kill condition is threatened
+- Notification when a catalyst milestone is hit
+- "Thesis stale" nudge — if you haven't reviewed a thesis in 30/60/90 days
+- Weekly digest: "Here's what happened this week across your theses"
+- Earnings reminder: "NVDA reports Thursday. Your catalyst: revenue > $15B"
 
-#### Module 5: Tax Intelligence (Paid tier — biggest $ saver)
-- Realized vs unrealized gains/losses (YTD)
-- Short-term vs long-term classification per lot
-- Tax-loss harvesting opportunities with wash sale awareness
-- "What if I sell?" tax impact calculator
-- Year-end tax preview estimate
-- Lot-level cost basis tracking (FIFO, LIFO, specific lot)
-
-#### Module 6: Alerts & Notifications (Retention driver)
-- Price alerts (above/below threshold)
-- Earnings in X days for your holdings
-- Dividend approaching (ex-date, payment date)
-- Unusual volume / large price moves on holdings
-- New insider buying/selling on holdings
-- Weekly portfolio digest email
+#### Feature 5: Thesis History & Performance (The learning loop)
+- When a position is closed, the thesis is archived (never deleted)
+- Track: Was the thesis right? Did you follow your own rules?
+- Over time, build a personal track record:
+  - "You've closed 14 theses. 9 profitable, 5 at a loss."
+  - "You held 3 positions past a triggered kill condition. All 3 lost money."
+  - "Your HIGH conviction picks return +32% avg vs +8% for LOW conviction."
+- This data is priceless for self-improvement and it locks users in
 
 ---
 
-### 2.4 Pricing Tiers
+### 2.4 What This Product Is NOT
+
+- **Not a portfolio tracker** — We don't care about total portfolio value, sector allocation, or tax lots. We track theses, not portfolios.
+- **Not a stock screener** — We don't help you find stocks. You come with your own ideas.
+- **Not a social platform** — Your theses are private. No sharing, no following, no influencers. (Maybe later, opt-in.)
+- **Not a trading tool** — No order execution, no real-time quotes needed.
+
+This focus is the product's strength. We do ONE thing and we do it better than anyone.
+
+---
+
+### 2.5 Pricing
 
 | Feature | Free | Pro ($20/mo) |
-|---------|------|-------------|
-| Manual portfolio (1 account) | ✓ | ✓ |
-| Multiple accounts | — | ✓ (unlimited) |
-| Consolidated view | — | ✓ |
-| Live prices | 15-min delayed | Real-time |
-| News feed (your holdings) | Last 24h | Full history + search |
-| AI summaries | 5/day | Unlimited |
-| Event calendar | Next 7 days | Full calendar + alerts |
-| Portfolio analytics | Basic (sector only) | Full suite |
-| Tax tools | — | ✓ |
-| Alerts | 3 price alerts | Unlimited + all types |
-| Weekly digest email | — | ✓ |
-| CSV export | — | ✓ |
-| Brokerage sync | — | ✓ (Phase 2) |
+|---------|------|--------------|
+| Active theses | 3 | Unlimited |
+| Thesis authoring (catalysts, kill conditions) | Full | Full |
+| Manual journal entries | Full | Full |
+| Signal detection (AI matching to your thesis) | — | Full |
+| Kill condition alerts | — | Full |
+| Catalyst hit notifications | — | Full |
+| Weekly thesis digest email | — | Full |
+| Thesis history & performance analytics | Last 3 closed | Full archive |
+| "Thesis stale" nudges | — | Full |
+| Earnings pre-match ("NVDA reports Thu...") | — | Full |
+| Export thesis history | — | Full |
+
+The free tier is generous enough to hook them. 3 theses lets them track their top 3 positions. But the moment they want signals and alerts — the thing that actually monitors their thesis for them — they pay.
 
 ---
 
-## Part 3: Data Requirements (What Do We Need?)
+## Part 3: The AI Signal Matching Engine (The Core Innovation)
 
-### 3.1 Market Data
+This is what makes the product worth paying for. This is the hard part and our moat.
 
-| Data | Source | Cost | Update Frequency |
-|------|--------|------|------------------|
-| Real-time/delayed stock prices | Polygon.io or Twelve Data | $30-80/mo (startup plans) | Real-time or 15-min |
-| Historical daily prices | Polygon.io or Yahoo Finance API | Included or free | End of day |
-| Company fundamentals (sector, industry, market cap) | Financial Modeling Prep (FMP) or Polygon | $15-30/mo | Daily |
-| Stock splits & corporate actions | Polygon.io | Included | As they occur |
+### How It Works
 
-### 3.2 Event Data
+```
+┌──────────────┐     ┌──────────────────┐     ┌────────────────┐
+│  Data Sources │────▶│  Article/Event   │────▶│  Signal Matcher│
+│              │     │  Pipeline        │     │  (LLM)         │
+│ - Press rel. │     │  (already built) │     │                │
+│ - Yahoo News │     │                  │     │ For each user: │
+│ - SEC filings│     │  Classified &    │     │ "Does this     │
+│ - Earnings   │     │  summarized      │     │  article relate│
+│ - Insider tx │     │                  │     │  to any of this│
+│              │     │                  │     │  user's thesis │
+│              │     │                  │     │  elements?"    │
+└──────────────┘     └──────────────────┘     └───────┬────────┘
+                                                      │
+                                              ┌───────▼────────┐
+                                              │  Signal Store   │
+                                              │                │
+                                              │ - thesis_id    │
+                                              │ - article_id   │
+                                              │ - element_type │
+                                              │   (catalyst/   │
+                                              │    kill cond.)  │
+                                              │ - element_id   │
+                                              │ - sentiment    │
+                                              │   (supports/   │
+                                              │    threatens/   │
+                                              │    mixed)       │
+                                              │ - reasoning    │
+                                              │ - confidence   │
+                                              └───────┬────────┘
+                                                      │
+                                              ┌───────▼────────┐
+                                              │  Alert Engine   │
+                                              │                │
+                                              │ High confidence│
+                                              │ + threatens    │
+                                              │ kill condition │
+                                              │ = PUSH ALERT   │
+                                              └────────────────┘
+```
 
-| Data | Source | Cost | Update Frequency |
-|------|--------|------|------------------|
-| Earnings dates | FMP or Earnings Whispers scrape | $15-30/mo or free | Weekly refresh |
-| Dividend data (ex-date, amount, pay date) | Polygon.io or FMP | Included | Daily |
-| FDA calendar (PDUFA dates) | FDA.gov scrape + BioPharmCatalyst | Free (scrape) | Daily |
-| IPO lockup expiry dates | Derived (IPO date + 180 days) | Free (calculated) | Once per IPO |
-| SEC insider transactions | SEC EDGAR (Forms 3, 4, 5) | Free (public data) | Daily |
-| Index rebalance dates | S&P Global press releases | Free (scrape) | Quarterly |
+### Signal Matching — The LLM Prompt (Conceptual)
 
-### 3.3 News & Intelligence Data
+When an article is published about a ticker that a user has a thesis on, we run:
+
+```
+Given this article about {TICKER}:
+Title: {title}
+Summary: {summary}
+
+And this investor's thesis:
+Thesis: {thesis_statement}
+
+Catalysts they're watching:
+{numbered list of catalysts}
+
+Kill conditions (reasons they'd sell):
+{numbered list of kill conditions}
+
+Determine:
+1. Is this article relevant to any of the above thesis elements? (yes/no)
+2. If yes, which element(s)? (by number)
+3. For each matched element: does this SUPPORT, THREATEN, or is it MIXED?
+4. Confidence (high/medium/low)
+5. One-sentence explanation of why
+```
+
+### Scaling Strategy
+
+The naive approach (run every article against every user's thesis) doesn't scale. Instead:
+
+1. **First filter by ticker** — only match articles to users who have a thesis on that ticker (already have ticker ↔ article relationships)
+2. **Batch by ticker** — if 500 users have an NVDA thesis, we don't run 500 LLM calls. We run the article against a **merged set of unique thesis elements** across all users, then fan out the results.
+3. **Cache common patterns** — "NVDA earnings beat" is relevant to 80% of NVDA theses. Cache the match.
+4. **Tiered matching** — Fast keyword pre-filter before LLM. If article mentions "revenue" and a catalyst mentions "revenue > $15B", it's a candidate. If there's no keyword overlap, skip.
+
+Expected LLM cost at scale: ~$0.50-1.00/user/month (well within margins at $20/mo).
+
+---
+
+## Part 4: Data Requirements
+
+### What We Already Have
 
 | Data | Source | Status |
 |------|--------|--------|
-| Press releases (GlobeNewswire, PR Newswire, Business Wire) | Yahoo Finance sitemap + RSS | **Already built** |
-| AI classification & summarization | Groq LLM | **Already built** |
-| SEC filings (8-K, 10-Q, 10-K) | SEC EDGAR RSS | Needs building |
-| Insider transaction alerts | SEC EDGAR Form 4 | Needs building |
+| Press releases (GlobeNewswire, PR Newswire, Business Wire) | Yahoo sitemap + RSS scrapers | **Built** |
+| AI article classification & summarization | Groq LLM pipeline | **Built** |
+| Article ↔ Ticker relationships | Ticker extraction in pipeline | **Built** |
+| US stock ticker universe (8,700 stocks) | us_common_stocks.csv | **Built** |
+| User auth (JWT + Google OAuth) | Flask routes | **Built** |
+| Ticker follow/unfollow | Models + API | **Built** |
 
-### 3.4 Tax & Cost Basis Data
+### What We Need to Add
 
-| Data | Source | Notes |
-|------|--------|-------|
-| User's cost basis & purchase dates | User input / brokerage sync | Core to tax features |
-| Federal tax brackets | IRS published rates | Update annually |
-| Wash sale rules | Business logic | 30-day window rule |
-| Long-term vs short-term cutoff | Business logic | 1-year holding period |
+| Data | Source | Cost | Priority |
+|------|--------|------|----------|
+| **Earnings dates + results** | Financial Modeling Prep (FMP) API | $15/mo (starter) | Phase 1 — needed for catalyst matching |
+| **Basic price data** (current price, % change) | FMP or Polygon free tier | Free-$30/mo | Phase 1 — needed for P&L on thesis card |
+| **SEC 8-K filings** | SEC EDGAR RSS feed | Free | Phase 2 — material events |
+| **Insider transactions** | SEC EDGAR Form 4 | Free | Phase 2 — insider signal |
+| **Earnings call transcripts** (stretch) | FMP or Seeking Alpha | $30-50/mo | Phase 3 — deep catalyst matching |
 
-### 3.5 Reference Data
+### What We Explicitly Do NOT Need
 
-| Data | Source | Notes |
-|------|--------|-------|
-| US stock ticker master list | Already have (us_common_stocks.csv) | **Already built** |
-| GICS sector/industry classifications | Polygon or FMP | Map each ticker |
-| Company geographic revenue breakdown | FMP or manual | For exposure analysis |
-| ETF holdings (for look-through analysis) | ETF provider APIs or FMP | Phase 2 |
+- Real-time price feeds (not a trading tool)
+- Full historical price data (not charting)
+- Sector/industry classifications (not a portfolio analyzer)
+- Dividend data (not an income tracker)
+- Tax lot tracking (not a tax tool)
+- Brokerage integration (not a portfolio sync tool)
+
+This simplicity is a massive advantage. Our data costs are minimal.
 
 ---
 
-## Part 4: Technical Architecture
+## Part 5: Technical Architecture
 
-### 4.1 New Database Models
+### 5.1 New Database Models
 
 ```
-Portfolio
-├── id (UUID)
-├── user_id (FK → User)
-├── name (e.g., "Schwab Brokerage", "Fidelity 401k")
-├── account_type (enum: brokerage, ira, roth_ira, 401k, other)
-├── created_at
-
-Holding
-├── id (UUID)
-├── portfolio_id (FK → Portfolio)
-├── ticker_id (FK → Ticker)
-├── status (enum: open, closed)
-├── created_at
-
-Lot (tax lot — one per purchase)
-├── id (UUID)
-├── holding_id (FK → Holding)
-├── shares (decimal)
-├── cost_per_share (decimal)
-├── purchase_date (date)
-├── sold_shares (decimal, default 0)
-├── sold_date (date, nullable)
-├── sold_price (decimal, nullable)
-├── is_closed (boolean)
-
-StockEvent
-├── id (UUID)
-├── ticker_id (FK → Ticker)
-├── event_type (enum: earnings, dividend, fda, lockup, split, insider_tx)
-├── event_date (date)
-├── details (JSON — flexible payload)
-├── source_url
-├── created_at
-
-Dividend
-├── id (UUID)
-├── ticker_id (FK → Ticker)
-├── ex_date (date)
-├── pay_date (date)
-├── amount_per_share (decimal)
-├── frequency (enum: quarterly, monthly, annual, special)
-
-PriceSnapshot
-├── id (UUID)
-├── ticker_id (FK → Ticker)
-├── price (decimal)
-├── change_pct (decimal)
-├── volume (bigint)
-├── market_cap (bigint)
-├── timestamp (datetime)
-
-Alert
-├── id (UUID)
+Thesis
+├── id (UUID, PK)
 ├── user_id (FK → User)
 ├── ticker_id (FK → Ticker)
-├── alert_type (enum: price_above, price_below, earnings, dividend, volume, insider)
-├── threshold (decimal, nullable)
-├── is_active (boolean)
-├── last_triggered (datetime)
-
-TickerFundamentals
-├── ticker_id (FK → Ticker, unique)
-├── sector
-├── industry
-├── market_cap (bigint)
-├── pe_ratio (decimal)
-├── dividend_yield (decimal)
-├── beta (decimal)
-├── revenue_geo_breakdown (JSON)
+├── status (enum: active, watching, closed)
+├── thesis_statement (text — the core argument)
+├── conviction (enum: high, medium, low)
+├── target_price (decimal, nullable)
+├── stop_price (decimal, nullable)
+├── shares (decimal, nullable — lightweight, not lot-level)
+├── cost_basis (decimal, nullable — avg cost per share)
+├── entered_at (date, nullable — when position was opened)
+├── closed_at (datetime, nullable)
+├── closed_reason (text, nullable — why they exited)
+├── closed_pnl_pct (decimal, nullable — final P&L when closed)
+├── created_at
 ├── updated_at
+
+ThesisCatalyst
+├── id (UUID, PK)
+├── thesis_id (FK → Thesis)
+├── description (text — "Data center revenue > $15B/quarter")
+├── status (enum: pending, on_track, hit, missed, irrelevant)
+├── target_metric (text, nullable — structured: "revenue > 15000000000")
+├── hit_at (datetime, nullable)
+├── notes (text, nullable — context when status changed)
+├── sort_order (int)
+├── created_at
+├── updated_at
+
+ThesisKillCondition
+├── id (UUID, PK)
+├── thesis_id (FK → Thesis)
+├── description (text — "AMD gains >30% datacenter GPU share")
+├── status (enum: safe, watching, triggered)
+├── triggered_at (datetime, nullable)
+├── notes (text, nullable)
+├── sort_order (int)
+├── created_at
+├── updated_at
+
+ThesisJournalEntry
+├── id (UUID, PK)
+├── thesis_id (FK → Thesis)
+├── entry_type (enum: manual, catalyst_update, kill_condition_update,
+│                      conviction_change, position_change, system)
+├── content (text — the note)
+├── metadata (JSON, nullable — e.g., {from: "medium", to: "high"} for conviction changes)
+├── created_at
+
+Signal
+├── id (UUID, PK)
+├── thesis_id (FK → Thesis)
+├── article_id (FK → Article, nullable)
+├── source_type (enum: article, earnings, insider, sec_filing, system)
+├── source_id (text, nullable — external ID for non-article sources)
+├── matched_element_type (enum: catalyst, kill_condition, thesis_general)
+├── matched_element_id (UUID, nullable — FK to catalyst or kill condition)
+├── sentiment (enum: supports, threatens, mixed)
+├── reasoning (text — one-sentence LLM explanation)
+├── confidence (enum: high, medium, low)
+├── is_read (boolean, default false)
+├── created_at
+
+ThesisSnapshot (for tracking changes over time)
+├── id (UUID, PK)
+├── thesis_id (FK → Thesis)
+├── field_changed (text — "conviction", "status", "target_price", etc.)
+├── old_value (text)
+├── new_value (text)
+├── created_at
 ```
 
-### 4.2 New API Endpoints
+### 5.2 API Endpoints
 
 ```
-# Portfolio Management
-POST   /portfolios/                          Create a portfolio
-GET    /portfolios/                          List user's portfolios
-GET    /portfolios/<id>                      Get portfolio with holdings
-PUT    /portfolios/<id>                      Update portfolio name/type
-DELETE /portfolios/<id>                      Delete portfolio
+# Thesis CRUD
+POST   /theses/                         Create a thesis (with catalysts & kill conditions)
+GET    /theses/                         List user's theses (filterable by status, conviction)
+GET    /theses/<id>                     Get full thesis detail (with catalysts, kills, recent signals)
+PUT    /theses/<id>                     Update thesis (statement, conviction, prices, position)
+DELETE /theses/<id>                     Soft-delete (archive) a thesis
+POST   /theses/<id>/close              Close a thesis (with reason and final P&L)
+POST   /theses/<id>/reopen             Reopen a closed thesis
 
-# Holdings & Lots
-POST   /portfolios/<id>/holdings/            Add a holding (with lots)
-GET    /portfolios/<id>/holdings/            List holdings in portfolio
-PUT    /holdings/<id>                        Update a holding
-DELETE /holdings/<id>                        Remove a holding
-POST   /holdings/<id>/lots/                  Add a tax lot
-PUT    /lots/<id>                            Update a lot
-DELETE /lots/<id>                            Remove a lot
-POST   /holdings/<id>/sell                   Record a sale (specify lots)
+# Catalysts
+POST   /theses/<id>/catalysts/         Add a catalyst
+PUT    /catalysts/<id>                  Update catalyst (description, status)
+DELETE /catalysts/<id>                  Remove a catalyst
+PUT    /catalysts/<id>/status           Update catalyst status (hit/missed/on_track)
 
-# Portfolio Analytics
-GET    /portfolios/summary                   Consolidated cross-account view
-GET    /portfolios/<id>/analytics/sectors     Sector breakdown
-GET    /portfolios/<id>/analytics/performance Performance vs benchmark
-GET    /portfolios/<id>/analytics/dividends   Dividend income projection
-GET    /portfolios/<id>/analytics/concentration  Concentration risk analysis
-GET    /portfolios/analytics/tax              Tax summary (gains/losses/harvesting)
+# Kill Conditions
+POST   /theses/<id>/kill-conditions/   Add a kill condition
+PUT    /kill-conditions/<id>           Update kill condition
+DELETE /kill-conditions/<id>           Remove a kill condition
+PUT    /kill-conditions/<id>/status    Update kill condition status (safe/watching/triggered)
 
-# Events
-GET    /events/                              Events for user's holdings (filtered)
-GET    /events/calendar                      Calendar view (date-grouped)
-GET    /events/upcoming                      Next 14 days for user's holdings
+# Journal
+POST   /theses/<id>/journal/           Add a journal entry
+GET    /theses/<id>/journal/           Get journal entries for a thesis
+GET    /journal/                       Get all journal entries across theses (global timeline)
 
-# Alerts
-POST   /alerts/                              Create an alert
-GET    /alerts/                              List user's alerts
-PUT    /alerts/<id>                           Update alert
-DELETE /alerts/<id>                           Delete alert
+# Signals
+GET    /signals/                       Get signal feed (all theses, paginated, filterable)
+GET    /theses/<id>/signals/           Get signals for a specific thesis
+PUT    /signals/<id>/read              Mark signal as read
+PUT    /signals/read-all               Mark all signals as read
 
-# Import
-POST   /import/csv                           Import holdings from CSV
-POST   /import/sync                          Trigger brokerage sync (Phase 2)
+# Thesis Analytics (Pro)
+GET    /theses/stats                   Overall thesis track record
+GET    /theses/closed/performance      Performance of closed theses
+GET    /theses/patterns                Patterns in your investing (conviction accuracy, etc.)
 
-# Prices
-GET    /prices/<symbol>                      Current price + change
-GET    /prices/batch?symbols=AAPL,MSFT       Batch price lookup
+# Digest
+GET    /digest/weekly                  Generate weekly thesis digest (also sent via email)
 ```
 
-### 4.3 New Data Pipelines (Extending `stream/`)
+### 5.3 New Pipeline: Signal Matching Engine
 
 ```
 stream/
-├── prices/
-│   ├── price_fetcher.py          Poll Polygon/Twelve Data for live quotes
-│   └── main.py                   Price update loop
-├── events/
-│   ├── earnings_scraper.py       Fetch upcoming earnings dates
-│   ├── dividend_scraper.py       Fetch dividend calendars
-│   ├── fda_scraper.py            Scrape FDA PDUFA calendar
-│   ├── insider_scraper.py        Parse SEC EDGAR Form 4 filings
-│   └── main.py                   Event pipeline orchestrator
-├── fundamentals/
-│   ├── fundamentals_fetcher.py   Fetch sector, industry, ratios
-│   └── main.py                   Daily fundamentals refresh
+├── signals/
+│   ├── matcher.py              Core signal matching logic
+│   │   ├── match_article_to_theses(article) → list[Signal]
+│   │   ├── match_earnings_to_theses(earnings_data) → list[Signal]
+│   │   └── match_insider_tx_to_theses(tx_data) → list[Signal]
+│   ├── prompt_builder.py       Build LLM prompts for thesis matching
+│   ├── batch_optimizer.py      Merge thesis elements per ticker for efficiency
+│   ├── keyword_prefilter.py    Fast keyword match before LLM call
+│   ├── alert_dispatcher.py     Send alerts for high-priority signals
+│   └── main.py                 Signal matching pipeline entry point
+├── earnings/
+│   ├── earnings_fetcher.py     Fetch earnings dates + results from FMP
+│   └── main.py
+├── insider/
+│   ├── insider_fetcher.py      Fetch Form 4 filings from SEC EDGAR
+│   └── main.py
 ```
 
-### 4.4 Infrastructure Needs
+### 5.4 Modified Existing Pipeline
 
-| Component | Current | Needed |
-|-----------|---------|--------|
-| Database | SQLite | PostgreSQL (for concurrent writes from pipelines + API) |
-| Task queue | None | Celery + Redis (for async pipeline jobs, alert checking) |
-| Cache | None | Redis (for price caching, rate limiting) |
-| Email | None | SendGrid or AWS SES (for digests, alerts) |
-| Hosting | Local | AWS/GCP/Railway (API + workers + DB) |
-| Price websocket | None | Consider for real-time price updates to frontend |
+The existing article pipeline (`stream/article_transformer.py`) doesn't change. After an article is processed and stored, the **signal matcher** picks it up:
 
----
+```
+Article stored → Signal matcher queries:
+  "Which users have a thesis on the tickers in this article?"
+  → For each: run thesis-matching LLM call
+  → Store signals
+  → Dispatch alerts if kill condition threatened
+```
 
-## Part 5: Build Phases
+### 5.5 Infrastructure
 
-### Phase 1 — MVP (Weeks 1-4): "Manual Portfolio + News"
-**Goal**: Launchable product. Users can track holdings and get personalized news.
-
-- [ ] Portfolio & Holding models + CRUD endpoints
-- [ ] Lot-level cost basis tracking
-- [ ] Basic P&L calculation (current price vs cost basis)
-- [ ] Price fetching pipeline (delayed quotes — free tier)
-- [ ] Connect existing news feed to portfolio (show only articles for held tickers)
-- [ ] Sector breakdown (using fundamentals data)
-- [ ] CSV import for holdings
-- [ ] Migrate from SQLite to PostgreSQL
-
-**User value**: "I can see all my holdings in one place with P&L, and I get news that matters to me."
-
-### Phase 2 — Intelligence (Weeks 5-8): "Events + Analytics"
-**Goal**: The features that justify paying.
-
-- [ ] Earnings date scraper + calendar
-- [ ] Dividend data pipeline + income projections
-- [ ] Upcoming events feed (filtered to user's holdings)
-- [ ] Portfolio analytics (sector, concentration, benchmark comparison)
-- [ ] Historical performance charting data
-- [ ] Multiple portfolio/account support
-- [ ] Consolidated cross-account view
-
-**User value**: "I never miss an earnings date or dividend, and I understand my portfolio's real composition."
-
-### Phase 3 — Tax & Alerts (Weeks 9-12): "The $20/mo Justification"
-**Goal**: Tax tools and alerts are the retention hooks.
-
-- [ ] Realized/unrealized gains tracking
-- [ ] Short-term vs long-term classification
-- [ ] Tax-loss harvesting suggestions with wash sale detection
-- [ ] "What if I sell?" tax calculator
-- [ ] Price alerts (push/email)
-- [ ] Earnings/dividend alerts
-- [ ] Weekly portfolio digest email
-- [ ] Insider transaction tracking (SEC EDGAR)
-
-**User value**: "This tool just saved me $500 in taxes. The $240/year subscription pays for itself."
-
-### Phase 4 — Automation (Weeks 13-16): "Stickiness"
-**Goal**: Make it hard to leave.
-
-- [ ] Brokerage sync via Plaid or SnapTrade (auto-import holdings)
-- [ ] FDA calendar for biotech holdings
-- [ ] ETF look-through (show underlying holdings of ETFs)
-- [ ] Geographic revenue exposure analysis
-- [ ] Correlation analysis between holdings
-- [ ] Mobile-friendly API design for future app
+| Component | Current | Needed | Notes |
+|-----------|---------|--------|-------|
+| Database | SQLite | **PostgreSQL** | Concurrent writes from signal matcher + API |
+| Task queue | None | **Celery + Redis** | Async signal matching, alert dispatch |
+| Cache | None | **Redis** | Cache LLM results per ticker-article pair |
+| Email | None | **SendGrid** | Weekly digest, kill condition alerts |
+| LLM | Groq (article classification) | **Groq (add signal matching)** | New prompt, same infra |
+| Hosting | Local | **Railway or Fly.io** | Simple deploy, low cost |
 
 ---
 
-## Part 6: Revenue & Unit Economics
+## Part 6: Build Phases
 
-### Cost Structure (Per Month at 1,000 Users)
+### Phase 1 — "Write Your Thesis" (Weeks 1-3)
+The scaffolding. Users can create and manage theses manually. No AI yet.
+
+- [ ] PostgreSQL migration
+- [ ] Thesis, Catalyst, KillCondition, JournalEntry models + migrations
+- [ ] Full CRUD API for theses, catalysts, kill conditions
+- [ ] Journal API (manual entries + auto-entries on changes)
+- [ ] ThesisSnapshot (audit trail for changes)
+- [ ] Basic price fetch for thesis card (current price, P&L vs cost basis)
+- [ ] Thesis list/dashboard endpoint (with status, conviction, P&L)
+- [ ] Close thesis flow (archive with reason + final P&L)
+
+**User value**: "Finally, a structured place to capture WHY I own each stock."
+
+### Phase 2 — "We Watch For You" (Weeks 4-7)
+The magic. AI signal matching turns passive notes into a living thesis.
+
+- [ ] Signal model + API endpoints
+- [ ] Signal matching engine (LLM prompt for thesis ↔ article matching)
+- [ ] Keyword pre-filter (reduce LLM calls)
+- [ ] Batch optimization (merge thesis elements per ticker)
+- [ ] Hook signal matcher into existing article pipeline
+- [ ] Signal feed endpoint (filterable by thesis, sentiment, confidence)
+- [ ] Earnings data fetcher (FMP) + earnings-to-catalyst matching
+- [ ] Basic signal confidence calibration
+
+**User value**: "I woke up and my thesis tracker told me an article threatens my GOOGL kill condition. I didn't have to go looking for it."
+
+### Phase 3 — "Never Miss, Never Forget" (Weeks 8-10)
+Alerts and accountability. The retention layer.
+
+- [ ] Alert dispatcher (email for kill condition threats, catalyst hits)
+- [ ] Weekly digest email (summary of signals across all theses)
+- [ ] "Thesis stale" detection + nudge (no activity in 30+ days)
+- [ ] Earnings pre-match ("NVDA reports Thursday — here's what to watch")
+- [ ] Insider transaction fetcher (SEC EDGAR Form 4) + signal matching
+- [ ] Mark signals as read
+- [ ] Notification preferences (what to alert on, frequency)
+
+**User value**: "I got an email that my CELH catalyst was hit. I reviewed and took profits. Without this, I would have missed it."
+
+### Phase 4 — "Learn From Yourself" (Weeks 11-13)
+The flywheel. Closed thesis analytics make you a better investor.
+
+- [ ] Thesis performance analytics (win rate, avg return by conviction)
+- [ ] Pattern detection ("You hold past triggered kill conditions — they lose money")
+- [ ] Thesis history browser (search closed theses)
+- [ ] Conviction accuracy tracking (do HIGH conviction picks outperform?)
+- [ ] Journal search across all theses
+- [ ] Export thesis history (PDF/CSV)
+
+**User value**: "My data shows my HIGH conviction picks return 3x my LOW conviction ones. I'm going to concentrate more."
+
+---
+
+## Part 7: What We Leverage From Existing Codebase
+
+| Existing | Reuse For |
+|----------|-----------|
+| User auth (JWT + Google OAuth) | Account system — no changes needed |
+| Ticker model (8,700 stocks) | Thesis ↔ Ticker linkage — no changes needed |
+| Article pipeline (Yahoo + RSS) | Source data for signal matching — no changes needed |
+| AI classification (Groq) | Same LLM infra, new prompt for thesis matching |
+| Article ↔ Ticker relationships | "Which articles match which theses?" — first filter |
+| Flask + SQLAlchemy + Alembic | Add new models, same patterns |
+| Marshmallow schemas | Validation for new endpoints |
+| Topic system | Could map thesis categories, but may not need it |
+
+**The existing article pipeline is our signal source.** We don't need to change it at all. We just add a consumer that reads stored articles and matches them against user theses.
+
+---
+
+## Part 8: Unit Economics
+
+### Costs (at 1,000 users, 150 paid)
 
 | Item | Monthly Cost |
 |------|-------------|
-| Market data API (Polygon.io startup) | $80 |
-| Groq LLM (article processing) | ~$20 |
-| PostgreSQL (managed — e.g., Supabase/RDS) | $25-50 |
-| Redis (managed) | $15-30 |
-| Hosting (API + workers) | $50-100 |
-| Email service (SendGrid) | $15 |
-| **Total** | **~$200-300/mo** |
+| Groq LLM — signal matching (~$0.75/paid user) | ~$115 |
+| Groq LLM — article processing (already running) | ~$20 |
+| FMP API (earnings data) | $15-30 |
+| PostgreSQL (Supabase free tier → $25) | $0-25 |
+| Redis (Upstash free tier → $10) | $0-10 |
+| Hosting (Railway/Fly.io) | $20-50 |
+| SendGrid (email alerts + digests) | $0-15 |
+| **Total** | **~$170-265/mo** |
 
-### Revenue Model
+### Revenue
 
-| Scenario | Users | Paid (10% conv.) | MRR |
-|----------|-------|-------------------|-----|
-| Launch | 1,000 | 100 | $2,000 |
-| Growth | 10,000 | 1,500 | $30,000 |
-| Scale | 50,000 | 10,000 | $200,000 |
+| | Users | Paid (15% conv.) | MRR | Margin |
+|---|---|---|---|---|
+| Launch | 1,000 | 150 | $3,000 | ~90% |
+| Growth | 5,000 | 750 | $15,000 | ~94% |
+| Scale | 20,000 | 3,000 | $60,000 | ~96% |
 
-At even 100 paid users, the service is cash-flow positive. Market data costs scale sub-linearly (one API call serves all users who hold the same stock).
-
----
-
-## Part 7: What We Already Have (Leverage Points)
-
-Our existing codebase gives us a head start:
-
-| Existing Asset | Reuse For |
-|----------------|-----------|
-| User auth (JWT + Google OAuth) | Account system — ready |
-| Ticker model + 8,700 US stocks loaded | Stock universe — ready |
-| Ticker follow/unfollow | Basis for holdings (extend, don't replace) |
-| Article scraping (Yahoo + RSS) | News feed — ready |
-| AI classification (8 categories) | Personalized news — ready |
-| AI summarization + bullet points | News intelligence — ready |
-| Topic follow system | Alert preference foundation |
-| Article ↔ Ticker relationships | Portfolio-filtered news — ready |
-| Flask + SQLAlchemy + Alembic | Backend infrastructure — ready |
-| Marshmallow schemas | API validation patterns — ready |
-
-**Estimated reuse**: ~40% of the MVP is already built. The news intelligence layer (Module 2) is essentially done — we just need to filter it by the user's holdings instead of their followed tickers.
+Thesis tracking has **higher conversion than generic portfolio tools** because:
+1. Users who write theses are more engaged by definition
+2. The free tier (3 theses, no signals) is useful but has a clear ceiling
+3. The paid feature (signal matching) is obviously valuable — you can see what you're missing
 
 ---
 
-## Part 8: Key Technical Decisions to Make
+## Part 9: Competitive Landscape
 
-1. **Price data provider**: Polygon.io (best data, $30-80/mo startup) vs Twelve Data (cheaper, $8-30/mo) vs Yahoo Finance unofficial (free, unreliable, legally gray)
+| Competitor | What they do | Why we win |
+|------------|-------------|-----------|
+| **Brokerage apps** | Track P&L, execute trades | Zero thesis support. They track "what", never "why." |
+| **Seeking Alpha** | Other people's theses | We track YOUR thesis. Their content is noise unless matched to your logic. |
+| **Stock Rover / Simply Wall St** | Fundamental screening | They help you find stocks. We help you manage your conviction AFTER you buy. |
+| **Notion / Google Docs** | Free-form notes | No signal matching, no structure, no automation, no accountability. |
+| **FinChat** | AI-powered fundamental data | Great for research. Not for ongoing thesis monitoring. |
+| **Journalytic / TradesViz** | Trade journaling | Track entries/exits, not theses. Backward-looking, not forward-looking. |
 
-2. **Real-time vs delayed prices**: Delayed (15-min) is dramatically cheaper and sufficient for a portfolio tracker (not a trading platform). Offer real-time as a pro feature later.
-
-3. **Brokerage sync provider**: Plaid (most popular, expensive at scale) vs SnapTrade (built for this use case, simpler) vs MX (enterprise-grade). Defer to Phase 4.
-
-4. **Database migration**: SQLite → PostgreSQL is necessary before launch. Do it in Phase 1.
-
-5. **Frontend**: This plan is backend-only. Frontend options: React SPA, Next.js, or mobile-first with React Native. Decision needed separately.
-
-6. **Notification delivery**: Email first (simple), push notifications later (requires mobile app or browser push).
+**Nobody connects the "why I bought" to "what's happening now" using AI.** That's the gap.
 
 ---
 
-## Part 9: Competitive Moat
+## Part 10: Risks & Mitigations
 
-What makes this defensible at $20/mo:
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| LLM signal matching is noisy/inaccurate | Users lose trust | Start conservative (high confidence only). Show reasoning. Let users rate signals. Improve over time. |
+| Users won't bother writing theses | No engagement | Make authoring dead simple. Offer templates. AI-assisted thesis drafting ("Tell me your NVDA bull case in 2 sentences"). |
+| Market is too niche | Not enough paying users | The "thoughtful retail investor" is a large, growing segment (Seeking Alpha has 300K+ premium subs). |
+| LLM costs spike | Margins shrink | Batch optimization, keyword pre-filter, caching. Switch models if needed. |
+| Users want full portfolio tracking | Feature requests | Resist. Stay focused. Link out to brokerage for P&L. We're the thesis layer, not the portfolio layer. |
 
-1. **AI-powered news intelligence** — Not just headlines, but classified, summarized, and ranked by portfolio relevance. Nobody else does this well for retail.
+---
 
-2. **Tax-lot awareness baked in from day one** — Most trackers bolt on tax features. We build with lot-level granularity from the start.
+## Summary: Why This Wins
 
-3. **Event anticipation, not just reaction** — The calendar tells you what's coming. Most tools only tell you what happened.
-
-4. **Cross-account consolidation** — The simple act of seeing a unified view across 3 brokerages is worth the subscription for many users.
-
-5. **Growing data advantage** — Every article we process, every event we track builds a better intelligence layer. The product gets smarter over time.
+1. **Radically focused** — One concept (the thesis card), not 20 features fighting for attention.
+2. **AI is the product, not a gimmick** — Signal matching is genuinely hard to do manually and obviously valuable.
+3. **Gets better with use** — The longer you use it, the richer your journal and the more powerful your personal analytics.
+4. **Low data costs** — We don't need real-time prices, full fundamentals, or brokerage integrations.
+5. **Built on what we have** — Our article pipeline is the signal source. We're not starting from zero.
+6. **Clear $20/mo value** — "This tool caught a kill condition I would have missed. That save was worth $2,000."
