@@ -38,12 +38,14 @@ def create_app(config_class=Config):
     from app.routes.tickers import tickers_bp
     from app.routes.topics import topics_bp
     from app.routes.articles import articles_bp
+    from app.routes.chat import chat_bp
 
     app.register_blueprint(auth_bp, url_prefix='/auth')
     app.register_blueprint(users_bp, url_prefix='/users')
     app.register_blueprint(tickers_bp, url_prefix='/tickers')
     app.register_blueprint(topics_bp, url_prefix='/topics')
     app.register_blueprint(articles_bp, url_prefix='/articles')
+    app.register_blueprint(chat_bp, url_prefix='/chat')
 
     # Error handlers
     from app.utils.error_handlers import register_error_handlers
