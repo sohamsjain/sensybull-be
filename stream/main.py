@@ -1,18 +1,39 @@
 """
-Entry point for Yahoo Finance scraper
+Entry point for the multi-provider press release pipeline.
+
+Registers all five press release providers with the orchestrator
+and starts concurrent polling.
+
+Usage:
+    python -m stream.main
 """
-from stream.scraper import Scraper
-from stream.config import Config
+from dotenv import load_dotenv
+load_dotenv()
+
+from stream.orchestrator import Orchestrator
+from stream.config import PipelineConfig
+from stream.providers import (
+    PRNewswireProvider,
+    GlobeNewswireProvider,
+    BusinessWireProvider,
+    NewsfileProvider,
+    AccessNewswireProvider,
+)
 
 
 def main():
-    """Main entry point"""
-    # Initialize with default config
-    config = Config()
+    config = PipelineConfig()
+    orchestrator = Orchestrator(config)
 
-    # Create and run scraper
-    scraper = Scraper(config)
-    scraper.scrape_continuously()
+    # Register all five press release providers
+    orchestrator.register_provider(PRNewswireProvider())
+    orchestrator.register_provider(GlobeNewswireProvider())
+    orchestrator.register_provider(BusinessWireProvider())
+    orchestrator.register_provider(NewsfileProvider())
+    orchestrator.register_provider(AccessNewswireProvider())
+
+    # Blocks forever — each provider polls in its own thread
+    orchestrator.run()
 
 
 if __name__ == "__main__":
