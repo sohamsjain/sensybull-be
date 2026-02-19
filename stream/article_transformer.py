@@ -14,7 +14,7 @@ class TransformerConfig:
     """Configuration for the article transformer"""
     models: List[str] = None  # List of models to rotate through
     temperature: float = 0.1
-    max_tokens: int = 500
+    max_tokens: int = 1024
     retry_attempts: int = 3
     default_threshold: float = 0.3
     max_text_length: int = 2000
@@ -32,7 +32,6 @@ class TransformerConfig:
 
                 # Tier 3: High quality (1K RPD)
                 "llama-3.3-70b-versatile",
-                "qwen/qwen3-32b",
 
                 # Tier 4: Unlimited tokens fallback (250 RPD)
                 "groq/compound",
@@ -275,7 +274,14 @@ Respond ONLY with valid JSON:
         """Parse API response and extract title, bullets, summary, category."""
         try:
             # Remove markdown code blocks if present
-            cleaned = re.sub(r'```json\s*|\s*```', '', output)
+            cleaned = re.sub(r'```json\s*|\s*```', '', output).strip()
+
+            # Extract JSON object from mixed content (handles models that add preamble text)
+            json_start = cleaned.find('{')
+            json_end = cleaned.rfind('}')
+            if json_start != -1 and json_end > json_start:
+                cleaned = cleaned[json_start:json_end + 1]
+
             parsed = json.loads(cleaned)
 
             title = parsed.get('title', original_title)[:100]
@@ -292,14 +298,14 @@ Respond ONLY with valid JSON:
             return title, bullets, summary, category
 
         except json.JSONDecodeError:
-            self.logger.warning("JSON parsing failed, trying regex extraction")
+            self.logger.warning(f"JSON parsing failed, trying regex extraction. Raw output (first 500 chars): {output[:500]}")
 
             # Try regex extraction
             try:
-                title_match = re.search(r'"title"\s*:\s*"([^"]+)"', output)
+                title_match = re.search(r'"title"\s*:\s*"((?:[^"\\]|\\.)*)"', output)
                 bullets_match = re.search(r'"bullets"\s*:\s*\[([^\]]+)\]', output)
-                summary_match = re.search(r'"summary"\s*:\s*"([^"]+)"', output)
-                category_match = re.search(r'"category"\s*:\s*"([^"]+)"', output)
+                summary_match = re.search(r'"summary"\s*:\s*"((?:[^"\\]|\\.)*)"', output)
+                category_match = re.search(r'"category"\s*:\s*"((?:[^"\\]|\\.)*)"', output)
 
                 if all([title_match, summary_match, category_match]):
                     # Extract bullets from array string
