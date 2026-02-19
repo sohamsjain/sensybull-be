@@ -53,7 +53,7 @@ class FeedReader:
         return new_items
 
     def _parse_timestamp(self, entry) -> int:
-        """Convert feed entry date to unix timestamp in milliseconds (to match Yahoo pipeline)"""
+        """Convert feed entry date to unix timestamp in milliseconds"""
         if hasattr(entry, 'published_parsed') and entry.published_parsed:
             return int(calendar.timegm(entry.published_parsed)) * 1000
         return int(time.time()) * 1000
