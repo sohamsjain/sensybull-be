@@ -62,13 +62,13 @@ class BaseProvider(ABC):
         """Extract the press release body text from parsed HTML."""
         pass
 
-    def _extract_tickers(self, text: str) -> List[str]:
+    def _extract_tickers(self, text: str, soup: Optional[BeautifulSoup] = None) -> List[str]:
         """Extract stock ticker symbols from exchange-qualified patterns like (NYSE:AAPL) or (NASDAQ:TSLA).
 
         Only NYSE and NASDAQ tickers are returned. Articles with no such
         patterns are considered unrelated to a publicly-traded stock.
         """
-        matches = re.findall(r'\((NYSE|NASDAQ):([A-Z]{1,5})\)', text)
+        matches = re.findall(r'\((NYSE|NASDAQ):\s*([A-Z]{1,5})\)', text)
         return list({symbol for _exchange, symbol in matches})
 
     def _extract_image(self, soup: BeautifulSoup) -> Optional[str]:

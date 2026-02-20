@@ -29,7 +29,7 @@ class PRNewswireProvider(BaseProvider):
                 self.logger.warning(f"No article text extracted from {url}")
                 return None
 
-            tickers = self._extract_tickers(article_text)
+            tickers = self._extract_tickers(article_text, soup)
             image_url = self._extract_image(soup)
             return self._build_article_dict(url, feed_item, article_text, tickers, image_url)
 
@@ -68,3 +68,25 @@ class PRNewswireProvider(BaseProvider):
                 return img['src']
 
         return None
+
+    def _extract_tickers(self, text: str, soup: Optional[BeautifulSoup] = None) -> List[str]:
+        """
+        PRNewswire-specific ticker extraction.
+
+        Priority:
+        1. Structured DOM extraction via <a class="ticket-symbol">
+        2. Fallback to BaseProvider regex extraction
+        """
+
+        # ---- Level 1: Structured extraction (BEST) ----
+        tickers = {
+            a.get_text(strip=True).upper()
+            for a in soup.select("a.ticket-symbol")
+            if a.get_text(strip=True)
+        }
+
+        if tickers:
+            return list(tickers)
+
+        # ---- Level 2: Fallback regex ----
+        return super()._extract_tickers(text)
