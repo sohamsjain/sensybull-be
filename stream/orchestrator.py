@@ -200,7 +200,15 @@ class Orchestrator:
         if not article_data:
             return False
 
-        # 3. AI transformation (classification + summarization)
+        # 3. Skip articles with no recognized NYSE/NASDAQ tickers — they are noise
+        if not article_data.get('tickers'):
+            self.logger.info(
+                f"[{provider.PROVIDER}] Skipping (no NYSE/NASDAQ tickers): {url}"
+            )
+            self.processed_urls.add(url)
+            return False
+
+        # 4. AI transformation (classification + summarization)
         try:
             title, bullets, summary, topic = self.transformer.transform(
                 article_data['title'],
@@ -219,7 +227,7 @@ class Orchestrator:
 
         article_data['extracted_at'] = datetime.now().isoformat()
 
-        # 4. Persist
+        # 5. Persist
         saved = self.storage.save_article(article_data)
         if saved:
             self.processed_urls.add(url)
