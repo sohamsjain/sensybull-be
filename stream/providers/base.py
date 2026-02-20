@@ -63,9 +63,13 @@ class BaseProvider(ABC):
         pass
 
     def _extract_tickers(self, text: str) -> List[str]:
-        """Extract stock ticker symbols from cashtag patterns ($AAPL)."""
-        tickers = re.findall(r'\$([A-Z]{1,5})\b', text)
-        return list(set(tickers))
+        """Extract stock ticker symbols from exchange-qualified patterns like (NYSE:AAPL) or (NASDAQ:TSLA).
+
+        Only NYSE and NASDAQ tickers are returned. Articles with no such
+        patterns are considered unrelated to a publicly-traded stock.
+        """
+        matches = re.findall(r'\((NYSE|NASDAQ):([A-Z]{1,5})\)', text)
+        return list({symbol for _exchange, symbol in matches})
 
     def _extract_image(self, soup: BeautifulSoup) -> Optional[str]:
         """Extract a featured image URL, defaulting to og:image meta tag."""
