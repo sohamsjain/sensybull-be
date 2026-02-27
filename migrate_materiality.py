@@ -9,6 +9,8 @@ This script is idempotent — safe to run multiple times.
 import sqlite3
 import os
 import sys
+import uuid
+from datetime import datetime, timezone
 
 
 def get_db_path():
@@ -54,13 +56,14 @@ def migrate(db_path):
         "Litigation", "Restructuring", "Contracts", "Clinical Trials", "General",
     ]
 
+    now = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+
     for topic_name in new_topics:
         cursor.execute("SELECT id FROM topic WHERE name = ?", (topic_name,))
         if not cursor.fetchone():
-            import uuid
             cursor.execute(
-                "INSERT INTO topic (id, name) VALUES (?, ?)",
-                (str(uuid.uuid4()), topic_name)
+                "INSERT INTO topic (id, name, last_updated, created_at) VALUES (?, ?, ?, ?)",
+                (str(uuid.uuid4()), topic_name, now, now)
             )
             print(f"  Seeded topic: {topic_name}")
 
