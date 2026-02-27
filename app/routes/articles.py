@@ -85,13 +85,27 @@ def get_all_articles():
     per_page = min(request.args.get('per_page', 20, type=int), 100)  # Max 100 per page
     ticker_symbol = request.args.get('ticker', type=str)
     provider = request.args.get('provider', type=str)
-    topic = request.args.get('topic', type=str)  # NEW: Filter by topic
+    topic = request.args.get('topic', type=str)
     search = request.args.get('search', type=str)
     start_date = request.args.get('start_date', type=int)  # Unix timestamp
     end_date = request.args.get('end_date', type=int)  # Unix timestamp
+    is_material = request.args.get('is_material', 'true', type=str).lower()
+    min_materiality_score = request.args.get('min_materiality_score', type=float)
 
     # Build query
     query = Article.query
+
+    # Materiality filter (default: only material articles, backward compatible)
+    if is_material == 'true':
+        query = query.filter(
+            or_(Article.is_material == True, Article.is_material == None)
+        )
+    elif is_material == 'false':
+        query = query.filter(Article.is_material == False)
+    # If is_material == 'all', no filter applied
+
+    if min_materiality_score is not None:
+        query = query.filter(Article.materiality_score >= min_materiality_score)
 
     # Filter by ticker
     if ticker_symbol:

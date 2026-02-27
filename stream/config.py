@@ -17,6 +17,11 @@ class PipelineConfig:
     # Delay between processing individual articles (seconds)
     ARTICLE_PROCESSING_DELAY = 1
 
+    # Materiality filter settings
+    MATERIALITY_THRESHOLD = 0.6
+    MATERIALITY_BORDERLINE_THRESHOLD = 0.4
+    ENABLE_MATERIALITY_FILTER = True
+
     # Logging
     LOG_LEVEL = "INFO"
     LOG_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'

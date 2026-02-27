@@ -51,9 +51,11 @@ class ArticleSchema(Schema):
     image_url = fields.Str(validate=validate.Length(max=512), allow_none=True)
     article_text = fields.Str(allow_none=True)
     extracted_at = fields.Str(validate=validate.Length(max=64), allow_none=True)
+    materiality_score = fields.Float(allow_none=True, dump_default=None)
+    is_material = fields.Bool(allow_none=True, dump_default=True)
     created_at = fields.DateTime(dump_only=True)
     tickers = fields.List(fields.Nested('TickerSchema'), dump_only=True)
-    topics = fields.List(fields.Nested('TopicSchema'), dump_only=True)  # NEW: Topics
+    topics = fields.List(fields.Nested('TopicSchema'), dump_only=True)
 
 
 class ArticleCreateSchema(Schema):
@@ -67,5 +69,7 @@ class ArticleCreateSchema(Schema):
     image_url = fields.Str(validate=validate.Length(max=512), allow_none=True)
     article_text = fields.Str(allow_none=True)
     extracted_at = fields.Str(validate=validate.Length(max=64), allow_none=True)
+    materiality_score = fields.Float(allow_none=True, load_default=None)
+    is_material = fields.Bool(allow_none=True, load_default=True)
     tickers = fields.List(fields.Str(), missing=[])
     topics = fields.List(fields.Str(), missing=[])
