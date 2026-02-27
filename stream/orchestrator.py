@@ -13,7 +13,9 @@ from datetime import datetime
 from typing import List, Set, Dict
 
 from .http_client import HTTPClient
+from .groq_client_pool import GroqClientPool
 from .article_transformer import ArticleTransformer
+from .materiality_filter import MaterialityFilter, MaterialityConfig
 from .storage_service import StorageService
 from .feed_reader import FeedReader
 from .providers.base import BaseProvider
@@ -40,7 +42,20 @@ class Orchestrator:
 
         # Shared infrastructure
         self.http_client = HTTPClient(self.config.HEADERS)
-        self.transformer = ArticleTransformer()
+
+        # Shared Groq client pool (single instance for rate limit coordination)
+        self.groq_pool = GroqClientPool()
+
+        # Materiality filter (runs BEFORE transformer)
+        materiality_config = MaterialityConfig(
+            material_threshold=self.config.MATERIALITY_THRESHOLD,
+            borderline_threshold=self.config.MATERIALITY_BORDERLINE_THRESHOLD,
+        )
+        self.materiality_filter = MaterialityFilter(self.groq_pool, materiality_config)
+
+        # Article transformer (runs AFTER materiality passes)
+        self.transformer = ArticleTransformer(self.groq_pool)
+
         self.storage = StorageService(self.http_client, self.config.API_ENDPOINT)
 
         # Cross-provider dedup (thread-safe for set add/in via GIL)
@@ -186,7 +201,7 @@ class Orchestrator:
     # ------------------------------------------------------------------
 
     def _process_article(self, provider: BaseProvider, url: str, feed_item: dict) -> bool:
-        """Fetch → parse → transform → store a single article. Returns True on success."""
+        """Fetch → parse → assess materiality → transform → store. Returns True on success."""
         self.logger.info(f"[{provider.PROVIDER}] Processing: {feed_item.get('title', url)}")
 
         # 1. Fetch full article page
@@ -208,26 +223,60 @@ class Orchestrator:
             self.processed_urls.add(url)
             return False
 
-        # 4. AI transformation (classification + summarization)
-        try:
-            title, bullets, summary, topic = self.transformer.transform(
-                article_data['title'],
-                article_data['article_text'],
+        # 4a. Materiality assessment (LLM-based)
+        if self.config.ENABLE_MATERIALITY_FILTER:
+            try:
+                materiality = self.materiality_filter.assess(
+                    article_data['title'],
+                    article_data['article_text'],
+                )
+                article_data['materiality_score'] = materiality.score
+                article_data['is_material'] = materiality.is_material
+
+                self.logger.info(
+                    f"[{provider.PROVIDER}] Materiality: score={materiality.score:.2f}, "
+                    f"material={materiality.is_material}, reason={materiality.reason}"
+                )
+            except Exception as e:
+                self.logger.error(
+                    f"[{provider.PROVIDER}] Materiality filter failed for {url}: {e}"
+                )
+                # Fail-open: default to material
+                article_data['materiality_score'] = None
+                article_data['is_material'] = True
+        else:
+            article_data['materiality_score'] = None
+            article_data['is_material'] = True
+
+        # 4b. AI transformation — ONLY for material articles
+        if article_data['is_material']:
+            try:
+                title, bullets, summary, topic = self.transformer.transform(
+                    article_data['title'],
+                    article_data['article_text'],
+                )
+                article_data['title'] = title
+                article_data['bullets'] = bullets
+                article_data['summary'] = summary
+                article_data['topics'] = [topic]
+            except Exception as e:
+                self.logger.error(f"[{provider.PROVIDER}] Transformer failed for {url}: {e}")
+                text = article_data.get('article_text', '')
+                article_data['bullets'] = []
+                article_data['summary'] = (text[:500] + "...") if len(text) > 500 else text
+                article_data['topics'] = ['General']
+        else:
+            # Immaterial: store minimal record, skip expensive transformation
+            self.logger.info(
+                f"[{provider.PROVIDER}] Skipping transformation (immaterial): {url}"
             )
-            article_data['title'] = title
-            article_data['bullets'] = bullets
-            article_data['summary'] = summary
-            article_data['topics'] = [topic]
-        except Exception as e:
-            self.logger.error(f"[{provider.PROVIDER}] Transformer failed for {url}: {e}")
-            text = article_data.get('article_text', '')
             article_data['bullets'] = []
-            article_data['summary'] = (text[:500] + "...") if len(text) > 500 else text
+            article_data['summary'] = None
             article_data['topics'] = ['General']
 
         article_data['extracted_at'] = datetime.now().isoformat()
 
-        # 5. Persist
+        # 5. Persist (all articles, material or not)
         saved = self.storage.save_article(article_data)
         if saved:
             self.processed_urls.add(url)

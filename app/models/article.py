@@ -20,6 +20,12 @@ class Article(BaseModel):
     article_text: so.Mapped[Optional[str]] = so.mapped_column(sa.Text, nullable=True)
     extracted_at: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64), nullable=True)
 
+    # Materiality fields
+    materiality_score: so.Mapped[Optional[float]] = so.mapped_column(sa.Float, nullable=True)
+    is_material: so.Mapped[Optional[bool]] = so.mapped_column(
+        sa.Boolean, nullable=True, default=True, server_default=sa.text('1')
+    )
+
     # Relationship with Ticker - eagerly loaded
     tickers: so.Mapped[List['Ticker']] = so.relationship(back_populates='articles', secondary=article_ticker)
     topics: so.Mapped[List['Topic']] = so.relationship(back_populates='articles', secondary=article_topic)
