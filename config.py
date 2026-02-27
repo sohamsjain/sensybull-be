@@ -17,3 +17,8 @@ class Config:
     # Google OAuth
     GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID')
     GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET')
+
+    # Alpaca Market Data
+    ALPACA_API_KEY_ID = os.environ.get('ALPACA_API_KEY_ID')
+    ALPACA_API_SECRET_KEY = os.environ.get('ALPACA_API_SECRET_KEY')
+    ALPACA_DATA_BASE_URL = os.environ.get('ALPACA_DATA_BASE_URL', 'https://data.alpaca.markets')
