@@ -20,8 +20,8 @@ class AlpacaClient:
         return current_app.config['ALPACA_DATA_BASE_URL']
 
     def get_snapshot(self, symbol: str) -> Optional[dict]:
-        """GET /v2/stocks/{symbol}/snapshot — latest trade, quote, daily bar."""
-        url = f"{self._base_url()}/v2/stocks/{symbol}/snapshot"
+        """GET /stocks/{symbol}/snapshot — latest trade, quote, daily bar."""
+        url = f"{self._base_url()}/stocks/{symbol}/snapshot"
         try:
             resp = requests.get(url, headers=self._headers(), timeout=10)
             resp.raise_for_status()
