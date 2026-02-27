@@ -21,4 +21,4 @@ class Config:
     # Alpaca Market Data
     ALPACA_API_KEY_ID = os.environ.get('ALPACA_API_KEY_ID')
     ALPACA_API_SECRET_KEY = os.environ.get('ALPACA_API_SECRET_KEY')
-    ALPACA_DATA_BASE_URL = os.environ.get('ALPACA_DATA_BASE_URL', 'https://data.alpaca.markets')
+    ALPACA_DATA_BASE_URL = os.environ.get('ALPACA_DATA_BASE_URL', 'https://data.alpaca.markets/v2')

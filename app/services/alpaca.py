@@ -69,6 +69,7 @@ class AlpacaClient:
                 'start': start,
                 'end': end,
                 'limit': limit,
+                'feed': "iex",
             }
             if page_token:
                 params['page_token'] = page_token
