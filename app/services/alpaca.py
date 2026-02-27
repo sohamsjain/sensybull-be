@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 
 class AlpacaClient:
-    """Thin wrapper around the Alpaca Market Data v2 REST API."""
+    """Thin wrapper around the Alpaca Market Data REST API."""
 
     def _headers(self) -> dict:
         return {
@@ -31,10 +31,10 @@ class AlpacaClient:
             return None
 
     def get_snapshots(self, symbols: List[str]) -> Dict[str, dict]:
-        """GET /v2/stocks/snapshots?symbols=... — batch latest prices."""
+        """GET /stocks/snapshots?symbols=... — batch latest prices."""
         if not symbols:
             return {}
-        url = f"{self._base_url()}/v2/stocks/snapshots"
+        url = f"{self._base_url()}/stocks/snapshots"
         params = {'symbols': ','.join(symbols)}
         try:
             resp = requests.get(url, headers=self._headers(),
@@ -53,7 +53,7 @@ class AlpacaClient:
         end: Optional[str] = None,
         limit: int = 1000,
     ) -> List[dict]:
-        """GET /v2/stocks/{symbol}/bars — historical OHLCV with pagination."""
+        """GET /stocks/{symbol}/bars — historical OHLCV with pagination."""
         if not start:
             start = (datetime.now(timezone.utc) - timedelta(days=30)).strftime('%Y-%m-%dT00:00:00Z')
         if not end:
@@ -61,7 +61,7 @@ class AlpacaClient:
 
         all_bars = []
         page_token = None
-        url = f"{self._base_url()}/v2/stocks/{symbol}/bars"
+        url = f"{self._base_url()}/stocks/{symbol}/bars"
 
         while True:
             params = {
