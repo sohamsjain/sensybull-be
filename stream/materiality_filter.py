@@ -62,6 +62,7 @@ class MaterialityFilter:
             prompt,
             temperature=self.config.temperature,
             max_tokens=self.config.max_tokens,
+            json_mode=True,
         )
 
         return self._parse_response(raw_output)
@@ -73,17 +74,29 @@ MATERIAL events include: earnings results, revenue guidance changes, M&A activit
 
 IMMATERIAL events include: marketing campaigns, conference attendance, product webinars, CSR/sustainability reports, routine hiring announcements, award wins, minor partnerships, holiday greetings, routine product updates without financial impact.
 
-PRESS RELEASE TITLE: {title}
+EXAMPLES:
 
-PRESS RELEASE TEXT (excerpt):
+Title: "Acme Corp to Acquire Widget Inc for $2.3 Billion"
+{{"materiality_score": 0.95, "is_material": true, "reason": "Major acquisition impacting company valuation and strategy"}}
+
+Title: "BioGen Announces FDA Approval for Cancer Drug Xeltria"
+{{"materiality_score": 0.92, "is_material": true, "reason": "FDA approval is a key regulatory milestone affecting revenue potential"}}
+
+Title: "TechCo CEO to Speak at Annual Innovation Summit 2026"
+{{"materiality_score": 0.1, "is_material": false, "reason": "Conference attendance is routine and does not impact business fundamentals"}}
+
+Title: "GreenCorp Wins 2025 Sustainability Excellence Award"
+{{"materiality_score": 0.08, "is_material": false, "reason": "Award recognition has no meaningful impact on financials or operations"}}
+
+NOW ASSESS THIS PRESS RELEASE:
+
+TITLE: {title}
+
+TEXT (excerpt):
 {text}
 
-Respond ONLY with valid JSON:
-{{
-  "materiality_score": 0.85,
-  "is_material": true,
-  "reason": "Brief one-sentence explanation"
-}}"""
+Respond with valid JSON:
+{{"materiality_score": 0.0, "is_material": false, "reason": "explanation"}}"""
 
     def _parse_response(self, output: str) -> MaterialityResult:
         """Parse the LLM materiality response."""

@@ -108,19 +108,22 @@ CLASSIFICATION RULES:
 - Only assign a specific category if confidence is >= {threshold}
 - If uncertain, use "General"
 
+EXAMPLE:
+
+ARTICLE TITLE: Vertex Pharmaceuticals Announces Agreement to Acquire Alpine Immune Sciences for $4.9 Billion
+ARTICLE TEXT: Vertex Pharmaceuticals announced a definitive agreement to acquire Alpine Immune Sciences in an all-cash transaction valued at approximately $4.9 billion. Under the terms of the agreement, Vertex will acquire all outstanding shares of Alpine for $65.00 per share. The acquisition will add ALPN-101, a dual ICOS/CD28 antagonist in Phase 2 trials, to Vertex's pipeline. The transaction is expected to close in the second half of 2025.
+
+{{"title": "Vertex to Acquire Alpine Immune for $4.9B", "bullets": ["All-cash deal at $65 per share", "Adds dual ICOS/CD28 antagonist to pipeline"], "summary": "Vertex Pharmaceuticals has agreed to buy Alpine Immune Sciences for about $4.9 billion in cash, paying $65 per share. The deal brings Alpine's experimental drug ALPN-101, which targets the immune system by blocking two proteins (ICOS and CD28), into Vertex's lineup of treatments. ALPN-101 is currently in mid-stage clinical testing. Vertex expects to finalize the purchase in the second half of 2025, pending regulatory and shareholder approval.", "category": "M&A", "confidence": 0.98}}
+
+NOW ANALYZE THIS PRESS RELEASE:
+
 ARTICLE TITLE: {title}
 
 ARTICLE TEXT:
 {text}
 
-Respond ONLY with valid JSON:
-{{
-  "title": "Refined title here",
-  "bullets": ["bullet point 1", "bullet point 2"],
-  "summary": "Plain English explanation of the article",
-  "category": "exact category name from list above",
-  "confidence": 0.95
-}}"""
+Respond with valid JSON:
+{{"title": "...", "bullets": ["...", "..."], "summary": "...", "category": "...", "confidence": 0.0}}"""
 
         return prompt
 
@@ -143,7 +146,11 @@ Respond ONLY with valid JSON:
         return "General"
 
     def _parse_response(self, output: str, threshold: float, original_title: str) -> Tuple[str, List[str], str, str]:
-        """Parse API response and extract title, bullets, summary, category."""
+        """Parse API response and extract title, bullets, summary, category.
+
+        With json_mode=True on the API call, output is guaranteed valid JSON.
+        The cleaning step is a safety net in case any model wraps it in markdown fences.
+        """
         try:
             cleaned = re.sub(r'```json\s*|\s*```', '', output).strip()
 
@@ -166,32 +173,9 @@ Respond ONLY with valid JSON:
 
             return title, bullets, summary, category
 
-        except json.JSONDecodeError:
-            self.logger.warning(f"JSON parsing failed, trying regex extraction. Raw output (first 500 chars): {output[:500]}")
-
-            try:
-                title_match = re.search(r'"title"\s*:\s*"((?:[^"\\]|\\.)*)"', output)
-                bullets_match = re.search(r'"bullets"\s*:\s*\[([^\]]+)\]', output)
-                summary_match = re.search(r'"summary"\s*:\s*"((?:[^"\\]|\\.)*)"', output)
-                category_match = re.search(r'"category"\s*:\s*"((?:[^"\\]|\\.)*)"', output)
-
-                if all([title_match, summary_match, category_match]):
-                    bullets = []
-                    if bullets_match:
-                        bullets_str = bullets_match.group(1)
-                        bullets = [b.strip(' "') for b in bullets_str.split(',')]
-
-                    return (
-                        title_match.group(1)[:100],
-                        bullets if bullets else [],
-                        summary_match.group(1)[:1000],
-                        self._validate_category(category_match.group(1))
-                    )
-            except Exception as e:
-                self.logger.error(f"Regex extraction failed: {e}")
-
-        self.logger.error("All parsing strategies failed, returning defaults")
-        return original_title, [], "Unable to generate summary", "General"
+        except (json.JSONDecodeError, ValueError, KeyError) as e:
+            self.logger.error(f"JSON parsing failed: {e}. Raw output (first 500 chars): {output[:500]}")
+            return original_title, [], "Unable to generate summary", "General"
 
     def transform(self, title: str, article_text: str, threshold: float = None) -> Tuple[str, List[str], str, str]:
         """
@@ -218,6 +202,7 @@ Respond ONLY with valid JSON:
                 prompt,
                 temperature=self.config.temperature,
                 max_tokens=self.config.max_tokens,
+                json_mode=True,
             )
 
             result_title, bullets, summary, category = self._parse_response(raw_output, threshold, cleaned_title)

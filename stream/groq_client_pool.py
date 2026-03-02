@@ -9,6 +9,7 @@ from typing import Dict, Tuple, List, Optional
 from dataclasses import dataclass
 import logging
 import os
+import threading
 import time
 
 
@@ -64,7 +65,10 @@ class GroqClientPool:
         self.config = config or GroqClientPoolConfig()
         self.client = Groq(api_key=api_key)
 
-        # Model rotation state
+        # Thread safety — shared across provider threads in the orchestrator
+        self._lock = threading.Lock()
+
+        # Model rotation state (protected by self._lock)
         self.current_model_index = 0
         self.model_failures = {model: 0 for model in self.config.models}
         self.model_last_used = {model: 0 for model in self.config.models}
@@ -103,6 +107,7 @@ class GroqClientPool:
         prompt: str,
         temperature: Optional[float] = None,
         max_tokens: Optional[int] = None,
+        json_mode: bool = False,
     ) -> Tuple[str, str]:
         """
         Call Groq API with model rotation on rate limits.
@@ -111,6 +116,7 @@ class GroqClientPool:
             prompt: The prompt to send
             temperature: Override default temperature (optional)
             max_tokens: Override default max_tokens (optional)
+            json_mode: If True, constrains output to valid JSON via response_format
 
         Returns:
             Tuple of (response_text, model_used)
@@ -118,11 +124,20 @@ class GroqClientPool:
         temp = temperature if temperature is not None else self.config.temperature
         tokens = max_tokens if max_tokens is not None else self.config.max_tokens
 
+        kwargs = {
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": temp,
+            "max_tokens": tokens,
+        }
+        if json_mode:
+            kwargs["response_format"] = {"type": "json_object"}
+
         models_tried = set()
         last_error = None
 
         while len(models_tried) < len(self.config.models):
-            current_model = self.config.models[self.current_model_index]
+            with self._lock:
+                current_model = self.config.models[self.current_model_index]
 
             if current_model in models_tried:
                 break
@@ -134,14 +149,13 @@ class GroqClientPool:
 
                 response = self.client.chat.completions.create(
                     model=current_model,
-                    messages=[{"role": "user", "content": prompt}],
-                    temperature=temp,
-                    max_tokens=tokens,
+                    **kwargs,
                 )
 
-                self.total_api_calls += 1
-                self.successful_calls_by_model[current_model] += 1
-                self.model_last_used[current_model] = time.time()
+                with self._lock:
+                    self.total_api_calls += 1
+                    self.successful_calls_by_model[current_model] += 1
+                    self.model_last_used[current_model] = time.time()
 
                 self.logger.info(
                     f"Success with {current_model} "
@@ -152,7 +166,8 @@ class GroqClientPool:
 
             except Exception as e:
                 last_error = e
-                self.model_failures[current_model] += 1
+                with self._lock:
+                    self.model_failures[current_model] += 1
 
                 if self._is_rate_limit_error(e):
                     self.logger.warning(
@@ -163,7 +178,8 @@ class GroqClientPool:
                         and len(models_tried) < len(self.config.models)
                     ):
                         self.logger.info("Rotating to next model...")
-                        self._get_next_model()
+                        with self._lock:
+                            self._get_next_model()
                         time.sleep(1)
                         continue
                     else:
@@ -178,19 +194,21 @@ class GroqClientPool:
 
     def get_stats(self) -> Dict:
         """Get usage statistics including model rotation info."""
-        return {
-            'total_api_calls': self.total_api_calls,
-            'current_model': self.config.models[self.current_model_index],
-            'successful_calls_by_model': self.successful_calls_by_model,
-            'model_failures': self.model_failures,
-            'model_rotation_enabled': self.config.enable_model_rotation,
-            'available_models': self.config.models
-        }
+        with self._lock:
+            return {
+                'total_api_calls': self.total_api_calls,
+                'current_model': self.config.models[self.current_model_index],
+                'successful_calls_by_model': dict(self.successful_calls_by_model),
+                'model_failures': dict(self.model_failures),
+                'model_rotation_enabled': self.config.enable_model_rotation,
+                'available_models': list(self.config.models),
+            }
 
     def reset_stats(self):
         """Reset all usage statistics."""
-        self.total_api_calls = 0
-        self.successful_calls_by_model = {model: 0 for model in self.config.models}
-        self.model_failures = {model: 0 for model in self.config.models}
-        self.model_last_used = {model: 0 for model in self.config.models}
+        with self._lock:
+            self.total_api_calls = 0
+            self.successful_calls_by_model = {model: 0 for model in self.config.models}
+            self.model_failures = {model: 0 for model in self.config.models}
+            self.model_last_used = {model: 0 for model in self.config.models}
         self.logger.info("Statistics reset")
