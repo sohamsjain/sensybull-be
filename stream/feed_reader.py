@@ -47,6 +47,7 @@ class FeedReader:
                 'description': entry.get('description', ''),
                 'published': self._parse_timestamp(entry),
                 'guid': guid,
+                'tags': entry.get('tags', []),
             })
 
         self.logger.info(f"Fetched {len(feed.entries)} items, {len(new_items)} new from {self.feed_url}")
