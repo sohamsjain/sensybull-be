@@ -15,7 +15,7 @@ from datetime import datetime, timezone
 
 def get_db_path():
     """Resolve the database path from config or default."""
-    db_url = os.environ.get('DATABASE_URL', 'sqlite:///trading_app.db')
+    db_url = os.environ.get('DATABASE_URL', 'sqlite:///instance/trading_app.db')
     if db_url.startswith('sqlite:///'):
         path = db_url.replace('sqlite:///', '')
         if not os.path.isabs(path):
