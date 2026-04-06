@@ -1,25 +1,46 @@
+import os
+import requests
+from dotenv import load_dotenv
+
 from app import create_app, db
 from app.models import Ticker
-import pandas as pd
 
+# Load env variables
+load_dotenv()
 
-df = pd.read_csv('us_common_stocks.csv')
-df.dropna(inplace=True)
+USER_AGENT = os.getenv("SEC_USER_AGENT")
+
+if not USER_AGENT:
+    raise ValueError("SEC_USER_AGENT is not set in environment variables")
+
+URL = "https://www.sec.gov/files/company_tickers.json"
+
+headers = {
+    "User-Agent": USER_AGENT
+}
+
+response = requests.get(URL, headers=headers)
+response.raise_for_status()
+data = response.json()
 
 app = create_app()
 app.app_context().push()
 
-for index, row in df.iterrows():
-    try:
-        symbol = row['symbol']
-        name = row['name']
-        if not symbol or not name:
-            print(f"Skipping row {index}: symbol or name is missing")
-            print(index, row)
-            continue
-        ticker = Ticker(symbol=symbol, name=name)
-        db.session.add(ticker)
-        db.session.commit()
-    except Exception as e:
-        db.session.rollback()
-        print(e)
+tickers = []
+
+for item in data.values():
+    symbol = item.get("ticker")
+    name = item.get("title")
+    cik = item.get("cik_str")
+
+    if not symbol or not name:
+        continue
+
+    tickers.append(
+        Ticker(symbol=symbol, name=name, cik=cik)
+    )
+
+db.session.bulk_save_objects(tickers)
+db.session.commit()
+
+print(f"Inserted {len(tickers)} tickers")
